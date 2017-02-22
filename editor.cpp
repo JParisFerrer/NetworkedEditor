@@ -1,6 +1,7 @@
 #include <curses.h>
 #include <iostream>
 #include <unistd.h>
+#include <signal.h>
 
 using namespace std;
 
@@ -9,6 +10,14 @@ using namespace std;
 WINDOW* mainWindow;
 WINDOW* commandWindow;
 
+void resize_handler(int sigwinch)
+{
+    int  w, h;
+    getmaxyx(stdscr, h, w);
+
+    wresize(mainWindow, h - 1, w);
+    wresize(commandWindow, 1, w);
+}
 
 void setup()
 {
@@ -18,6 +27,8 @@ void setup()
     noecho();       // prevent the screen from showing typed in characters
 
     use_extended_names(TRUE);
+
+    signal(SIGWINCH, resize_handler);
 
     wrefresh(stdscr);
 
