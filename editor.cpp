@@ -1,5 +1,6 @@
 #include <curses.h>
 #include <iostream>
+#include <sstream>
 #include <unistd.h>
 #include <signal.h>
 #include <vector>
@@ -19,11 +20,18 @@ vector<int> commands;
 
 void resize_handler(int sigwinch)
 {
+    cerr << "RESIZING" << endl;
+
     int  w, h;
     getmaxyx(stdscr, h, w);
 
     wresize(mainWindow, h - 1, w);
     wresize(commandWindow, 1, w);
+
+    data.resize(h-1);
+    for(auto& v : data)
+        v.resize(w, ' ');
+    commands.resize(w, ' ');
 }
 
 void setup()
@@ -160,6 +168,12 @@ int main(int argc, char** argv)
             else
             {
                 // do special stuff
+                if(commands[0] == ':')
+                {
+                    stringstream s;
+                    for(auto& c : commands)
+                        s << c;
+                }
 
                 // clear command window
                 for(auto& c : commands)
