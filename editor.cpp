@@ -10,6 +10,7 @@ using namespace std;
 #define CTRL_W 23
 // the KEY_ENTER is wrong, use this constant instead
 #define ENTER_KEY 13
+#define CTRL_Q 17
 
 WINDOW* mainWindow;
 WINDOW* commandWindow;
@@ -17,60 +18,6 @@ WINDOW* currWindow;
 
 vector<vector< int >> data;
 vector<int> commands;
-
-void resize_handler(int sigwinch)
-{
-    cerr << "RESIZING" << endl;
-
-    int  w, h;
-    getmaxyx(stdscr, h, w);
-
-    wresize(mainWindow, h - 1, w);
-    wresize(commandWindow, 1, w);
-
-    data.resize(h-1);
-    for(auto& v : data)
-        v.resize(w, ' ');
-    commands.resize(w, ' ');
-}
-
-void setup()
-{
-    initscr();      // Init the library
-    //cbreak();       // set it up so we read a character at a time
-    raw();          // set it up so we read a character at a time
-    nonl();
-    noecho();       // prevent the screen from showing typed in characters
-
-    use_extended_names(TRUE);
-
-    signal(SIGWINCH, resize_handler);
-
-    wrefresh(stdscr);
-
-    int w, h;
-    getmaxyx(stdscr, h, w);
-
-    mainWindow = newwin(h - 1, w, 0, 0);
-    commandWindow = newwin(1, w, h-1, 0);
-
-    data.resize(h-1);
-    for(auto & v : data)
-        v.resize(w, ' ');    
-    commands.resize(w, ' ');
-
-    nodelay(mainWindow, FALSE);
-    nodelay(commandWindow, FALSE);
-
-
-    wrefresh(mainWindow);
-    wrefresh(commandWindow);
-
-    
-    keypad(mainWindow, TRUE); // we should handle the special characters ourselves
-    keypad(commandWindow, TRUE);
-    keypad(stdscr, TRUE);
-}
 
 void refresh_screen()
 {
@@ -115,6 +62,65 @@ void move_win_rel(WINDOW* win, int xoffs, int yoffs)
 
 }
 
+void resize_handler(int sigwinch)
+{
+    endwin();
+    refresh();
+    clear();
+
+    int  w, h;
+    getmaxyx(stdscr, h, w);
+
+    wresize(mainWindow, h - 1, w);
+    wresize(commandWindow, 1, w);
+
+    data.resize(h-1);
+    for(auto& v : data)
+        v.resize(w, ' ');
+    commands.resize(w, ' ');
+
+    refresh_screen();
+}
+
+void setup()
+{
+    initscr();      // Init the library
+    //cbreak();       // set it up so we read a character at a time
+    raw();          // set it up so we read a character at a time
+    nonl();
+    noecho();       // prevent the screen from showing typed in characters
+
+    use_extended_names(TRUE);
+
+    signal(SIGWINCH, resize_handler);
+
+    wrefresh(stdscr);
+
+    int w, h;
+    getmaxyx(stdscr, h, w);
+
+    mainWindow = newwin(h - 1, w, 0, 0);
+    commandWindow = newwin(1, w, h-1, 0);
+
+    data.resize(h-1);
+    for(auto & v : data)
+        v.resize(w, ' ');    
+    commands.resize(w, ' ');
+
+    nodelay(mainWindow, FALSE);
+    nodelay(commandWindow, FALSE);
+
+
+    wrefresh(mainWindow);
+    wrefresh(commandWindow);
+
+    
+    keypad(mainWindow, TRUE); // we should handle the special characters ourselves
+    keypad(commandWindow, TRUE);
+    keypad(stdscr, TRUE);
+}
+
+
 int main(int argc, char** argv)
 {
     setup();
@@ -140,7 +146,7 @@ int main(int argc, char** argv)
     {
         in = wgetch(currWindow);
 
-        if(in == 'q')
+        if(in == CTRL_Q)        // exit on CTRL+Q
             break;
         else if (in == KEY_UP)
         {
@@ -171,8 +177,10 @@ int main(int argc, char** argv)
                 if(commands[0] == ':')
                 {
                     stringstream s;
-                    for(auto& c : commands)
-                        s << c;
+                    for(auto it = commands.begin()+1; it != commands.end(); it++)
+                        s << (char)*it;
+
+                    //cerr << s.str() << endl;
                 }
 
                 // clear command window
@@ -187,7 +195,33 @@ int main(int argc, char** argv)
         {
             currWindow = (currWindow == mainWindow ? commandWindow : mainWindow);
         }
-        else
+        else if (in == KEY_BACKSPACE)
+        {
+            int x, y;
+            getyx(currWindow, y, x);
+
+            if(x > 0)
+            {
+                move_win_rel(currWindow, -1, 0);
+
+                getyx(currWindow, y, x);
+            
+                if(currWindow == commandWindow)
+                {
+                    //commands[x] = ' ';
+                    commands.erase(commands.begin() + x);
+                    commands.push_back(' ');
+                }
+                else
+                {
+                    //data[y][x] = ' ';
+                    data[y].erase(data[y].begin() + x);
+                    data[y].push_back(' ');
+                }
+            }
+
+        }
+        else if (isprint(in))
         {
             int x, y;
             getyx(currWindow, y, x);
@@ -202,6 +236,13 @@ int main(int argc, char** argv)
             }
 
             move_win_rel(currWindow, 1, 0);
+        }
+        else
+        {
+            // ugly character
+
+            // this cerr used to get the keycodes of things that aren't already handled, like CTRL+W, etc
+            //cerr << in << endl;
         }
 
 

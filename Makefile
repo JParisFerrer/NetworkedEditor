@@ -6,3 +6,5 @@ all: editor
 editor: editor.cpp
 	g++ editor.cpp $(CXXFLAGS) $(LDFLAGS) -o editor
 
+clean:
+	rm ./editor
