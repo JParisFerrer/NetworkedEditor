@@ -29,8 +29,8 @@ void resize_handler(int sigwinch)
 void setup()
 {
     initscr();      // Init the library
-    cbreak();       // set it up so we read a character at a time
-    //raw();
+    //cbreak();       // set it up so we read a character at a time
+    raw();          // set it up so we read a character at a time
     nonl();
     noecho();       // prevent the screen from showing typed in characters
 
@@ -48,8 +48,8 @@ void setup()
 
     data.resize(h-1);
     for(auto & v : data)
-        v.resize(w, 32);    // 32 is a space
-    commands.resize(w,32);     // 32 is a space
+        v.resize(w, ' ');    
+    commands.resize(w, ' ');
 
     nodelay(mainWindow, FALSE);
     nodelay(commandWindow, FALSE);
@@ -93,6 +93,12 @@ void refresh_screen()
 
 }
 
+void reset_x(WINDOW* win)
+{
+    int x, y;
+    getyx(win, y, x);
+    wmove(win, y, 0);
+}
 void move_win_rel(WINDOW* win, int xoffs, int yoffs)
 {
     int x, y;
@@ -149,9 +155,7 @@ int main(int argc, char** argv)
             if(currWindow == mainWindow)
             {
                 move_win_rel(currWindow, 0, 1);
-                int x, y;
-                getyx(currWindow, y, x);
-                wmove(currWindow, y, 0);    // we already rel_moved the y, so only reset x to 0
+                reset_x(currWindow);
             }
             else
             {
@@ -159,7 +163,9 @@ int main(int argc, char** argv)
 
                 // clear command window
                 for(auto& c : commands)
-                    c = 23;         // space == 23
+                    c = ' ';
+                
+                reset_x(currWindow);
             }
             
         }
