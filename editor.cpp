@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <vector>
+#include <cstdio>
 
 using namespace std;
 
@@ -18,6 +19,48 @@ WINDOW* currWindow;
 
 vector<vector< int >> data;
 vector<int> commands;
+
+// https://stackoverflow.com/a/7408245
+std::vector<std::string> split(const std::string &text, char sep) 
+{
+    std::vector<std::string> tokens;
+    std::size_t start = 0, end = 0;
+    while ((end = text.find(sep, start)) != std::string::npos) 
+    {
+        if (end != start) 
+            tokens.push_back(text.substr(start, end - start));
+        start = end + 1;
+    }
+    if (end != start) 
+        tokens.push_back(text.substr(start));
+    return tokens;
+}
+void reset_x(WINDOW* win)
+{
+    int x, y;
+    getyx(win, y, x);
+    wmove(win, y, 0);
+}
+
+void clear_cmd_window()
+{
+    for(auto& c : commands)
+        c = ' ';
+    waddstr(commandWindow, "                                                          ");
+                
+    reset_x(currWindow);
+}
+
+void print_in_cmd_window(const char* c)
+{
+    clear_cmd_window();
+    reset_x(commandWindow);
+    waddstr(commandWindow, c);
+    wrefresh(commandWindow);
+    sleep(1);
+    clear_cmd_window();
+    wrefresh(commandWindow);
+}
 
 void refresh_screen()
 {
@@ -48,12 +91,6 @@ void refresh_screen()
 
 }
 
-void reset_x(WINDOW* win)
-{
-    int x, y;
-    getyx(win, y, x);
-    wmove(win, y, 0);
-}
 void move_win_rel(WINDOW* win, int xoffs, int yoffs)
 {
     int x, y;
@@ -176,18 +213,55 @@ int main(int argc, char** argv)
                 // do special stuff
                 if(commands[0] == ':')
                 {
-                    stringstream s;
+                    stringstream str;
                     for(auto it = commands.begin()+1; it != commands.end(); it++)
-                        s << (char)*it;
+                        str << (char)*it;
 
-                    //cerr << s.str() << endl;
+                    //print_in_cmd_window(str.str().c_str());
+
+                    vector<string> v = split(str.str(), ' ');
+                    v.pop_back();
+
+                    //for(auto& s : v)
+                        //print_in_cmd_window(s.c_str());
+
+                    if(v.size() > 0)
+                    {
+                        if(v[0] == "w")
+                        {
+                            //print_in_cmd_window(v[1].c_str());
+
+                            // save
+                            if(v.size() == 2)
+                            {
+                                FILE* file = fopen(v[1].c_str(), "w");
+                                for(auto& v1 : data)
+                                {
+                                    for(auto& c : v1)
+                                    {
+                                        fwrite(&c, 1, 1, file);
+                                    }
+                                    fwrite("\n", 1, 1, file);
+                                }
+
+                                fclose(file);
+                            }
+                            else
+                            {
+                                // bad args
+                                print_in_cmd_window("Bad # of args: ");
+                                print_in_cmd_window(to_string(v.size()).c_str());
+                            }
+                        }
+                    }
+
+
+                    //cerr << str.str() << endl;
                 }
 
+
                 // clear command window
-                for(auto& c : commands)
-                    c = ' ';
-                
-                reset_x(currWindow);
+                clear_cmd_window();
             }
             
         }
