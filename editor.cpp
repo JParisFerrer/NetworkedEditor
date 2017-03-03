@@ -50,7 +50,7 @@ int main () {
       window.move(c);
     }
 
-    if(c!='\n'&&c!='\r'){
+    else if(c!='\n'&&c!='\r'){
       getchar();
       window.insert(c);
 
