@@ -245,6 +245,11 @@ int main(int argc, char** argv)
                                 }
 
                                 fclose(file);
+                                char* c;
+
+                                asprintf(&c, "Saved file: %s", v[1].c_str());
+                                print_in_cmd_window(c);
+                                free(c);        // I think it uses malloc
                             }
                             else
                             {
