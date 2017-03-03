@@ -1,7 +1,10 @@
 LDFLAGS = -lncurses
+CXXFLAGS = -std=c++11 
 
 all: editor
 
 editor: editor.cpp
-	clang++ editor.cpp $(LDFLAGS) -o editor
+	g++ editor.cpp $(CXXFLAGS) $(LDFLAGS) -o editor
 
+clean:
+	rm ./editor
