@@ -5,6 +5,7 @@
 #include <signal.h>
 #include <vector>
 #include <cstdio>
+#include "textcontainer.h"
 
 using namespace std;
 
@@ -35,6 +36,7 @@ std::vector<std::string> split(const std::string &text, char sep)
         tokens.push_back(text.substr(start));
     return tokens;
 }
+
 void reset_x(WINDOW* win)
 {
     int x, y;
