@@ -8,7 +8,7 @@ TextContainer<T>::TextContainer(){
 
 /*Core Functions*/
 template <typename T>
-void TextContainer<T>::add(size_t line, size_t index, int input){
+void TextContainer<T>::insert(size_t line, size_t index, int input){
     this->container.add(line,index,input);
 }
 

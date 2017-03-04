@@ -5,12 +5,12 @@
 template <typename T>
 class TextContainer {
 public:
-  /*Constructors*/=
+  /*Constructors*/
     TextContainer();
 
   /*Core Functions*/
 
-    void add(size_t line, size_t index, int input);
+    void insert(size_t line, size_t index, int input);
     void remove(size_t line, size_t index);
     void writeToFile(string fileName);
     void readFromFile(string fileName);
