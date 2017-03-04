@@ -5,14 +5,21 @@
 template <typename T>
 class TextContainer {
 public:
-  void add();
-  void remove();
-  void moveCursor();
-  void save();
-  void writeToFile();
+  /*Constructors*/
+    TextContainer();
+
+  /*Core Functions*/
+
+    void add(size_t line, size_t index, int input);
+    void remove(size_t line, size_t index);
+    void writeToFile(string fileName);
+    void readFromFile(string fileName);
+    void print(size_t line,size_t maxWidth);
 
   /*debugging utilties*/
-  void print();
+
+    void printDebug();
+    void writeToFileDebug();
 
 private:
   T container;
