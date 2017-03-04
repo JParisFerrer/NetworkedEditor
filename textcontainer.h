@@ -5,7 +5,7 @@
 template <typename T>
 class TextContainer {
 public:
-  /*Constructors*/
+  /*Constructors*/=
     TextContainer();
 
   /*Core Functions*/
