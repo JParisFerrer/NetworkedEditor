@@ -18,12 +18,12 @@ void TextContainer<T>::remove(size_t line, size_t index){
 }
 
 template <typename T>
-void TextContainer<T>::writeToFile(string fileName){
+void TextContainer<T>::writeToFile(std::string fileName){
     this->container.writeToFile(fileName);
 }
 
 template <typename T>
-void TextContainer<T>::readFromFile(string fileName){
+void TextContainer<T>::readFromFile(std::string fileName){
     this->container.readFromFile(fileName);
 }
 

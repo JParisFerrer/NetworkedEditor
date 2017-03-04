@@ -14,11 +14,11 @@ void LockFreeList::remove(size_t line, size_t index){
 
 }
 
-void LockFreeList::writeToFile(string fileName){
+void LockFreeList::writeToFile(std::string fileName){
 
 }
 
-void LockFreeList::readFromFile(string fileName){
+void LockFreeList::readFromFile(std::string fileName){
 
 }
 

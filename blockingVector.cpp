@@ -14,11 +14,11 @@ void BlockingVector::remove(size_t line, size_t index){
 
 }
 
-void BlockingVector::writeToFile(string fileName){
+void BlockingVector::writeToFile(std::string fileName){
 
 }
 
-void BlockingVector::readFromFile(string fileName){
+void BlockingVector::readFromFile(std::string fileName){
 
 }
 
