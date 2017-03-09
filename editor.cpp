@@ -18,8 +18,13 @@ WINDOW* mainWindow;
 WINDOW* commandWindow;
 WINDOW* currWindow;
 
-vector<vector< int >> data;
+//vector<vector< int >> data;
+TextContainer<BlockingVector> text;
 vector<int> commands;
+
+size_t numdisplaylines = 1;
+size_t numlines = 1;
+size_t lineoffset;
 
 // https://stackoverflow.com/a/7408245
 std::vector<std::string> split(const std::string &text, char sep) 
@@ -67,15 +72,15 @@ void print_in_cmd_window(const char* c)
 void refresh_screen()
 {
     int sx_main, sy_main, sx_command, sy_command;
+    int maxx, maxy;
+    getmaxyx(stdscr, maxy, maxx);
+
     getyx(mainWindow, sy_main, sx_main);
     getyx(commandWindow, sy_command, sx_command);
 
-    for (int y = 0; y < data.size(); y++)
+    for (size_t y = 0; y < numdisplaylines; y++)
     {
-        for(int x = 0; x < data[0].size(); x++)
-        {
-            mvwaddch(mainWindow, y, x, data[y][x]);
-        }
+        text.print(lineoffset + y, maxx); 
     }
 
     for(int x = 0; x < commands.size(); x++)
@@ -97,8 +102,18 @@ void move_win_rel(WINDOW* win, int xoffs, int yoffs)
 {
     int x, y;
     getyx(win, y, x);
-    wmove(win, y+yoffs, x+xoffs);
 
+    if(y >= numdisplaylines+yoffs)
+    {
+        // scroll down if possible
+        if(numlines > numdisplaylines)
+            lineoffset++;
+        
+        return;
+
+    }
+
+    wmove(win, y+yoffs, x+xoffs);
 }
 
 void resize_handler(int sigwinch)
@@ -113,9 +128,16 @@ void resize_handler(int sigwinch)
     wresize(mainWindow, h - 1, w);
     wresize(commandWindow, 1, w);
 
+    if(h-1 < numdisplaylines)
+    {
+        numdisplaylines = h-1;
+    }
+
+    /*
     data.resize(h-1);
     for(auto& v : data)
         v.resize(w, ' ');
+    */
     commands.resize(w, ' ');
 
     refresh_screen();
@@ -141,9 +163,11 @@ void setup()
     mainWindow = newwin(h - 1, w, 0, 0);
     commandWindow = newwin(1, w, h-1, 0);
 
+    /*
     data.resize(h-1);
     for(auto & v : data)
         v.resize(w, ' ');    
+     */
     commands.resize(w, ' ');
 
     nodelay(mainWindow, FALSE);
@@ -236,6 +260,7 @@ int main(int argc, char** argv)
                             // save
                             if(v.size() == 2)
                             {
+                                /*
                                 FILE* file = fopen(v[1].c_str(), "w");
                                 for(auto& v1 : data)
                                 {
@@ -247,6 +272,8 @@ int main(int argc, char** argv)
                                 }
 
                                 fclose(file);
+                                */
+                                text.writeToFile(v[1]);
                                 char* c;
 
                                 asprintf(&c, "Saved file: %s", v[1].c_str());
@@ -296,8 +323,9 @@ int main(int argc, char** argv)
                 else
                 {
                     //data[y][x] = ' ';
-                    data[y].erase(data[y].begin() + x);
-                    data[y].push_back(' ');
+                    //data[y].erase(data[y].begin() + x);
+                    //data[y].push_back(' ');
+                    text.remove(y+lineoffset, x);
                 }
             }
 
@@ -313,7 +341,8 @@ int main(int argc, char** argv)
             }
             else 
             {
-                data[y][x] = in;
+                //data[y][x] = in;
+                text.insert(y+offs, x, in);
             }
 
             move_win_rel(currWindow, 1, 0);
