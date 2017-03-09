@@ -6,6 +6,7 @@
 #include <vector>
 #include <cstdio>
 #include "textcontainer.h"
+#include "blockingVector.h"
 
 using namespace std;
 
@@ -342,7 +343,7 @@ int main(int argc, char** argv)
             else 
             {
                 //data[y][x] = in;
-                text.insert(y+offs, x, in);
+                text.insert(y + lineoffset, x, in);
             }
 
             move_win_rel(currWindow, 1, 0);
