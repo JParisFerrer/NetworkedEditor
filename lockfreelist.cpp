@@ -13,6 +13,9 @@ void LockFreeList::insert(size_t line, size_t index, int input){
 void LockFreeList::remove(size_t line, size_t index){
 
 }
+void LockFreeList::move(size_t line, size_t index){
+
+}
 
 void LockFreeList::writeToFile(std::string fileName){
 

@@ -3,7 +3,6 @@
 /*Constructors*/
 template <typename T>
 TextContainer<T>::TextContainer(){
-
 }
 
 /*Core Functions*/
@@ -15,6 +14,11 @@ void TextContainer<T>::insert(size_t line, size_t index, int input){
 template <typename T>
 void TextContainer<T>::remove(size_t line, size_t index){
     this->container.remove(line,index);
+}
+
+template <typename T>
+void TextContainer<T>::move(size_t line, size_t index){
+    this->container.move(line,index);
 }
 
 template <typename T>

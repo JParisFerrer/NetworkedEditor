@@ -12,6 +12,7 @@ public:
 
     void insert(size_t line, size_t index, int input);
     void remove(size_t line, size_t index);
+    void move(size_t line, size_t index);
     void writeToFile(std::string fileName);
     void readFromFile(std::string fileName);
     void print(size_t line,size_t maxWidth);
@@ -23,6 +24,7 @@ public:
 
 private:
   T container;
+
 
 };
 

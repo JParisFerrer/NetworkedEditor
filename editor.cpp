@@ -28,17 +28,17 @@ size_t numlines = 1;
 size_t lineoffset;
 
 // https://stackoverflow.com/a/7408245
-std::vector<std::string> split(const std::string &text, char sep) 
+std::vector<std::string> split(const std::string &text, char sep)
 {
     std::vector<std::string> tokens;
     std::size_t start = 0, end = 0;
-    while ((end = text.find(sep, start)) != std::string::npos) 
+    while ((end = text.find(sep, start)) != std::string::npos)
     {
-        if (end != start) 
+        if (end != start)
             tokens.push_back(text.substr(start, end - start));
         start = end + 1;
     }
-    if (end != start) 
+    if (end != start)
         tokens.push_back(text.substr(start));
     return tokens;
 }
@@ -55,7 +55,7 @@ void clear_cmd_window()
     for(auto& c : commands)
         c = ' ';
     waddstr(commandWindow, "                                                          ");
-                
+
     reset_x(currWindow);
 }
 
@@ -81,7 +81,7 @@ void refresh_screen()
 
     for (size_t y = 0; y < numdisplaylines; y++)
     {
-        text.print(lineoffset + y, maxx); 
+        text.print(lineoffset + y, maxx);
     }
 
     for(int x = 0; x < commands.size(); x++)
@@ -109,7 +109,7 @@ void move_win_rel(WINDOW* win, int xoffs, int yoffs)
         // scroll down if possible
         if(numlines > numdisplaylines)
             lineoffset++;
-        
+
         return;
 
     }
@@ -167,7 +167,7 @@ void setup()
     /*
     data.resize(h-1);
     for(auto & v : data)
-        v.resize(w, ' ');    
+        v.resize(w, ' ');
      */
     commands.resize(w, ' ');
 
@@ -178,8 +178,8 @@ void setup()
     wrefresh(mainWindow);
     wrefresh(commandWindow);
 
-    
-    keypad(mainWindow, TRUE); // we should handle the special characters ourselves
+
+    keypad(mainWindow, TRUE); // we should handle the special chars ourselves
     keypad(commandWindow, TRUE);
     keypad(stdscr, TRUE);
 }
@@ -298,7 +298,7 @@ int main(int argc, char** argv)
                 // clear command window
                 clear_cmd_window();
             }
-            
+
         }
         else if (in == CTRL_W)
         {
@@ -314,7 +314,7 @@ int main(int argc, char** argv)
                 move_win_rel(currWindow, -1, 0);
 
                 getyx(currWindow, y, x);
-            
+
                 if(currWindow == commandWindow)
                 {
                     //commands[x] = ' ';
@@ -340,7 +340,7 @@ int main(int argc, char** argv)
             {
                 commands[x] = in;
             }
-            else 
+            else
             {
                 //data[y][x] = in;
                 text.insert(y + lineoffset, x, in);
@@ -352,7 +352,8 @@ int main(int argc, char** argv)
         {
             // ugly character
 
-            // this cerr used to get the keycodes of things that aren't already handled, like CTRL+W, etc
+            // this cerr used to get the keycodes of things
+            // that aren't already handled, like CTRL+W, etc
             //cerr << in << endl;
         }
 
@@ -362,4 +363,3 @@ int main(int argc, char** argv)
 
     endwin();
 }
-
