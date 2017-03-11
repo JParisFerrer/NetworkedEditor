@@ -1,10 +1,9 @@
-#define _NEWLINE 100
-#define _CARRIAGE 100
+#define _NEWLINE KEY_ENTER
 //
 
 /*Constructors*/
 BlockingVector::BlockingVector(){
-
+    data.push_back(std::vector<int> ());
 
 }
 
@@ -16,7 +15,7 @@ void BlockingVector::insert(size_t line, size_t index, int input){
     std::vector<int>::iterator itHorz=this->data[line].begin();
     std::vector< std::vector<int> >::iterator itVert=this->data.begin();
 
-    if (input == _NEWLINE || input == _CARRIAGE) {
+    if (input == _NEWLINE) {
         this->data[line].insert(itHorz+index, input);
         this->data.insert(itVert+line, std::vector<int> ());
     }
@@ -28,17 +27,26 @@ void BlockingVector::insert(size_t line, size_t index, int input){
 
 void BlockingVector::remove(size_t line, size_t index){
     std::lock_guard<std::mutex> lock(vectorLock);
-    /*if the index is 0
-        if line is not 0
-            delete the new line in line-1
-            move the vector to line -1 and delete that line
-            move(index to length of lin-1 and line)
-    else
-        delete that index only */
+
+    std::vector<int>::iterator itHorz=this->data[line].begin();
+    std::vector<int>::iterator itHorzEnd=this->data[line].end();
+    std::vector< std::vector<int> >::iterator itVert=this->data.begin();
+
+    if( index==0){
+        if(line!=0) {
+                auto itAbove=this->data[line-1].end();
+                data[line-1].insert(itAbove, itHorz,itHorzEnd);
+                data.erase(itVert+line);
+        }
+    }
+    else{
+        data[line].erase(itHorz+index);
+    }
 }
 void BlockingVector::move(size_t line, size_t index){
+    std::lock_guard<std::mutex> lock(vectorLock);
     this->index=index;
-
+    this->line=line;
 }
 
 void BlockingVector::writeToFile(std::string fileName){
@@ -70,8 +78,9 @@ void BlockingVector::print(size_t line,size_t maxWidth){
 
     for(size_t i = 0; i<this->data.size(); i++){
         for(size_t j = 0; j<this->data[i].size(); j++){
-            std::cout<<data[i][j]<<" ";
+            std::cout<<data[i][j];
         }
+        std::cout<<std::endl;
     }
 }
 

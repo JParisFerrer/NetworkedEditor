@@ -19,6 +19,7 @@ public:
   void move(size_t line, size_t index);
   void writeToFile(std::string fileName);
   void readFromFile(std::string fileName);
+
   void print(size_t line,size_t maxWidth);
 
   /*debugging utilties*/
@@ -31,7 +32,7 @@ private:
     std::mutex vectorLock;
     std::mutex debugLock;
 
-    size_t index;
+    size_t index;   // not necessarily needed for blocking vector
     size_t line;
 };
 
