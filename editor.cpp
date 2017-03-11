@@ -8,7 +8,7 @@
 #include "textcontainer.h"
 #include "blockingVector.h"
 
-using namespace std;
+using namespace std{
 
 #define CTRL_W 23
 // the KEY_ENTER is wrong, use this constant instead
@@ -362,4 +362,5 @@ int main(int argc, char** argv)
     }
 
     endwin();
+}
 }

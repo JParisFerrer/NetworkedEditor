@@ -52,24 +52,43 @@ void BlockingVector::move(size_t line, size_t index){
 void BlockingVector::writeToFile(std::string fileName){
     //init file with vector data
     std::ofstream outFile;
-    outFile.open(fileName,std::fstream::app);
+    outFile.open(fileName, std::fstream::out);
 
     for(size_t i = 0; i<this->data.size(); i++){
         for(size_t j = 0; j<this->data[i].size(); j++){
             outFile<<data[i][j];
         }
+        outFile << std::endl;
     }
 
 }
 
 void BlockingVector::readFromFile(std::string fileName){
     std::lock_guard<std::mutex> lock(vectorLock);
+    vector<vector<int>> newvec;
     //init vector with file data
+    std::fstream in;
+    in.open(fileName, std::fstream::in);
 
+    int inchar;
+    size_t vecindex = 0;
+    newvec.push_back(std::vector<int>());
 
+    while(in.good())
+    {
+        in >> inchar;
+        if(inchar == std::endl)
+        {
+            vecindex++;
+            newvec.push_back(std::vector<int>());
+        }
+        else
+        {
+            newvec[vecindex].push_back(inchar);
+        }
+    }
 
-
-    //get int
+    data = std::move(newvec);
 
 }
 
@@ -101,7 +120,7 @@ void BlockingVector::writeToFileDebug(){
     std::lock_guard<std::mutex> lock(debugLock);
     static size_t count=0;
     std::ofstream outFile;
-    outFile.open("debug.txt",std::fstream::app);
+    outFile.open("debug.txt",std::fstream::out);
 
     outFile<<count<<std::endl;
     for(size_t i = 0; i<this->data.size(); i++){
