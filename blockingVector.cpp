@@ -75,20 +75,16 @@ void BlockingVector::readFromFile(std::string fileName){
     size_t vecindex = 0;
     newvec.push_back(std::vector<int>());
 
-    while(in.good())
-    {
+    while(in.good()){
         in >> inchar;
-        if(inchar == '\n')
-        {
+        if(inchar == '\n'){
             vecindex++;
             newvec.push_back(std::vector<int>());
         }
-        else
-        {
+        else{
             newvec[vecindex].push_back(inchar);
         }
     }
-
     data = std::move(newvec);
 
 }
