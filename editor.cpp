@@ -79,10 +79,12 @@ void refresh_screen()
     getyx(mainWindow, sy_main, sx_main);
     getyx(commandWindow, sy_command, sx_command);
 
-    for (size_t y = 0; y < numdisplaylines; y++)
-    {
-        text.print(lineoffset + y, maxx);
-    }
+    //for (size_t y = 0; y < numdisplaylines; y++)
+    //{
+    //    text.print(lineoffset + y, maxx);
+    //}
+
+    text.print(lineoffset, maxx);
 
     for(int x = 0; x < commands.size(); x++)
     {

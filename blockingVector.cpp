@@ -1,5 +1,6 @@
-#define _NEWLINE KEY_ENTER
-//
+#include "blockingVector.h"
+
+extern WINDOW* mainWindow;
 
 /*Constructors*/
 BlockingVector::BlockingVector(){
@@ -15,7 +16,7 @@ void BlockingVector::insert(size_t line, size_t index, int input){
     std::vector<int>::iterator itHorz=this->data[line].begin();
     std::vector< std::vector<int> >::iterator itVert=this->data.begin();
 
-    if (input == _NEWLINE) {
+    if (input == KEY_ENTER) {
         this->data[line].insert(itHorz+index, input);
         this->data.insert(itVert+line, std::vector<int> ());
     }
@@ -95,11 +96,12 @@ void BlockingVector::readFromFile(std::string fileName){
 void BlockingVector::print(size_t line,size_t maxWidth){
     std::lock_guard<std::mutex> lock(vectorLock);
 
-    for(size_t i = 0; i<this->data.size(); i++){
-        for(size_t j = 0; j<this->data[i].size(); j++){
-            std::cout<<data[i][j];
+    for(size_t i = line; i < this->data.size(); i++){
+        for(size_t j = 0; j < std::min(this->data[i].size(), maxWidth); j++){
+            //std::cout << (char)data[i][j];
+            mvwaddch(mainWindow, i+line, j, this->data[i][j]);
         }
-        std::cout<<std::endl;
+        //std::cout<<std::endl;
     }
 }
 

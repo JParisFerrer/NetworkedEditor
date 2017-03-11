@@ -3,7 +3,7 @@
 #define _BLOCKINGVECTOR_H_
 
 
-
+#include <curses.h>
 #include <vector>
 #include <fstream>
 #include <iostream>
@@ -35,6 +35,5 @@ private:
     size_t line;
 };
 
-#include "blockingVector.cpp"
 
 #endif
