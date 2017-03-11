@@ -65,7 +65,7 @@ void BlockingVector::writeToFile(std::string fileName){
 
 void BlockingVector::readFromFile(std::string fileName){
     std::lock_guard<std::mutex> lock(vectorLock);
-    vector<vector<int>> newvec;
+    std::vector<std::vector<int>> newvec;
     //init vector with file data
     std::fstream in;
     in.open(fileName, std::fstream::in);
@@ -77,7 +77,7 @@ void BlockingVector::readFromFile(std::string fileName){
     while(in.good())
     {
         in >> inchar;
-        if(inchar == std::endl)
+        if(inchar == '\n')
         {
             vecindex++;
             newvec.push_back(std::vector<int>());

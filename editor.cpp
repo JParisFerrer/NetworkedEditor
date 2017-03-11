@@ -8,7 +8,7 @@
 #include "textcontainer.h"
 #include "blockingVector.h"
 
-using namespace std{
+//using namespace std;
 
 #define CTRL_W 23
 // the KEY_ENTER is wrong, use this constant instead
@@ -21,7 +21,7 @@ WINDOW* currWindow;
 
 //vector<vector< int >> data;
 TextContainer<BlockingVector> text;
-vector<int> commands;
+std::vector<int> commands;
 
 size_t numdisplaylines = 1;
 size_t numlines = 1;
@@ -54,7 +54,7 @@ void clear_cmd_window()
 {
     for(auto& c : commands)
         c = ' ';
-    waddstr(commandWindow, "                                                          ");
+    waddstr(commandWindow, "                                                                                                                                              ");
 
     reset_x(currWindow);
 }
@@ -240,13 +240,13 @@ int main(int argc, char** argv)
                 // do special stuff
                 if(commands[0] == ':')
                 {
-                    stringstream str;
+                    std::stringstream str;
                     for(auto it = commands.begin()+1; it != commands.end(); it++)
                         str << (char)*it;
 
                     //print_in_cmd_window(str.str().c_str());
 
-                    vector<string> v = split(str.str(), ' ');
+                    std::vector<std::string> v = split(str.str(), ' ');
                     v.pop_back();
 
                     //for(auto& s : v)
@@ -285,7 +285,7 @@ int main(int argc, char** argv)
                             {
                                 // bad args
                                 print_in_cmd_window("Bad # of args: ");
-                                print_in_cmd_window(to_string(v.size()).c_str());
+                                print_in_cmd_window(std::to_string(v.size()).c_str());
                             }
                         }
                     }
@@ -362,5 +362,6 @@ int main(int argc, char** argv)
     }
 
     endwin();
-}
+
+    return 0;
 }
