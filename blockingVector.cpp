@@ -103,6 +103,7 @@ void BlockingVector::print(size_t line,size_t maxWidth){
 
 
 /*debugging utilties*/
+/* TODO ?delete?*/
 void BlockingVector::printDebug(){
     std::cout<<std::endl;
     for(size_t i = 0; i<this->data.size(); i++){
@@ -118,7 +119,7 @@ void BlockingVector::writeToFileDebug(){
     std::lock_guard<std::mutex> lock(debugLock);
     static size_t count=0;
     std::ofstream outFile;
-    outFile.open("debug.txt",std::fstream::out);
+    outFile.open("debug.txt",std::fstream::app);
 
     outFile<<count<<std::endl;
     for(size_t i = 0; i<this->data.size(); i++){
