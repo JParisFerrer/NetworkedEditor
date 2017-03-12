@@ -1,5 +1,8 @@
 #include "blockingVector.h"
 
+// the KEY_ENTER is wrong, use this constant instead
+#define ENTER_KEY 13
+
 extern WINDOW* mainWindow;
 
 /*Constructors*/
@@ -16,9 +19,11 @@ void BlockingVector::insert(size_t line, size_t index, int input){
     std::vector<int>::iterator itHorz=this->data[line].begin();
     std::vector< std::vector<int> >::iterator itVert=this->data.begin();
 
-    if (input == KEY_ENTER) {
-        this->data[line].insert(itHorz+index, input);
-        this->data.insert(itVert+line, std::vector<int> ());
+    if (input == ENTER_KEY) {
+        //this->data[line].insert(itHorz+index, input);
+        this->data.insert(itVert+line+1, std::vector<int> ());
+        this->data[line+1].assign(itHorz+index, data[line].end());
+        //this->data[line].erase(itHorz+index, data[line].end());
     }
     else{
         this->data[line].insert(itHorz+index, input);

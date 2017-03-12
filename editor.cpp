@@ -109,22 +109,32 @@ void move_win_rel(WINDOW* win, int xoffs, int yoffs)
     int x, y;
     getyx(win, y, x);
 
-    int capped_x, capped_y;
-    capped_y = y + yoffs;
-
-    if(capped_y > numdisplaylines-1)
+    if(win == mainWindow)
     {
-        // we went over the edge, try to scroll
-        if(capped_y < numlines)
-            lineoffset += capped_y - numdisplaylines;
+        int capped_x, capped_y;
+        capped_y = y + yoffs;
 
-        capped_y = numdisplaylines-1;
+        if(capped_y > numdisplaylines-1)
+        {
+            // we went over the edge, try to scroll
+            if(capped_y < numlines)
+                lineoffset += capped_y - numdisplaylines;
+
+            capped_y = numdisplaylines-1;
+        }
+
+        capped_x = std::min((size_t)(x + xoffs), text.line_width(capped_y));
+
+        wmove(win, capped_y, capped_x);
+        text.move(capped_y + lineoffset, capped_x);
     }
+    else
+    {
+        // command window
+        int capped_x = std::min(x + xoffs, (int)commands.size());
 
-    capped_x = std::min((size_t)(x + xoffs), text.line_width(capped_y));
-
-    wmove(win, capped_y, capped_x);
-    text.move(capped_y + lineoffset, capped_x);
+        wmove(win, 0, capped_x);
+    }
 }
 
 void resize_handler(int sigwinch)
@@ -218,6 +228,9 @@ int main(int argc, char** argv)
     int in;     // a char, but uses higher values for special chars
     while(1)
     {
+        int maxx, maxy;
+        getmaxyx(mainWindow, maxy, maxx);
+
         in = wgetch(currWindow);
 
         if(in == CTRL_Q)        // exit on CTRL+Q
@@ -244,6 +257,10 @@ int main(int argc, char** argv)
             {
                 int x, y;
                 getyx(mainWindow, y, x);
+                numlines++;
+                if(numdisplaylines < maxy)
+                    numdisplaylines++;
+
                 text.insert(y + lineoffset, x, in);
 
                 move_win_rel(currWindow, 0, 1);

@@ -1,6 +1,6 @@
 CXX = g++
 LDFLAGS = -std=c++11 -lncurses
-CXXFLAGS = -std=c++11 -c
+CXXFLAGS = -std=c++11 -c -g
 
 all: editor
 
