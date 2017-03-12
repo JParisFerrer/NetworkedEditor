@@ -9,30 +9,32 @@
 #include <iostream>
 #include <mutex>
 class BlockingVector {
-public:
-  /*Constructors*/
-  BlockingVector();
+    public:
+        /*Constructors*/
+        BlockingVector();
 
-  /*Core Functions*/
-  void insert(size_t line, size_t index, int input);
-  void remove(size_t line, size_t index);
-  void move(size_t line, size_t index);
-  void writeToFile(std::string fileName);
-  void readFromFile(std::string fileName);
-  void print(size_t line,size_t maxWidth);
+        /*Core Functions*/
+        void insert(size_t line, size_t index, int input);
+        void remove(size_t line, size_t index);
+        void move(size_t line, size_t index);
+        size_t line_width(size_t line);
 
-  /*debugging utilties*/
-  void printDebug();
-  void writeToFileDebug();
+        void writeToFile(std::string fileName);
+        void readFromFile(std::string fileName);
+        void print(size_t line,size_t maxWidth);
 
-private:
-    std::vector< std::vector<int> > data;
+        /*debugging utilties*/
+        void printDebug();
+        void writeToFileDebug();
 
-    std::mutex vectorLock;
-    std::mutex debugLock;
+    private:
+        std::vector< std::vector<int> > data;
 
-    size_t index;   // not necessarily needed for blocking vector
-    size_t line;
+        std::mutex vectorLock;
+        std::mutex debugLock;
+
+        size_t index;   // not necessarily needed for blocking vector
+        size_t line;
 };
 
 

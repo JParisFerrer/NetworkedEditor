@@ -4,26 +4,28 @@
 
 template <typename T>
 class TextContainer {
-public:
-  /*Constructors*/
-    TextContainer();
+    public:
+        /*Constructors*/
+        TextContainer();
 
-  /*Core Functions*/
+        /*Core Functions*/
 
-    void insert(size_t line, size_t index, int input);
-    void remove(size_t line, size_t index);
-    void move(size_t line, size_t index);
-    void writeToFile(std::string fileName);
-    void readFromFile(std::string fileName);
-    void print(size_t line,size_t maxWidth);
+        void insert(size_t line, size_t index, int input);
+        void remove(size_t line, size_t index);
+        void move(size_t line, size_t index);
+        size_t line_width(size_t line);
 
-  /*debugging utilties*/
+        void writeToFile(std::string fileName);
+        void readFromFile(std::string fileName);
+        void print(size_t line,size_t maxWidth);
 
-    void printDebug();
-    void writeToFileDebug();
+        /*debugging utilties*/
 
-private:
-  T container;
+        void printDebug();
+        void writeToFileDebug();
+
+    private:
+        T container;
 
 
 };

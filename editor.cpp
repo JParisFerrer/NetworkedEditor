@@ -25,7 +25,7 @@ std::vector<int> commands;
 
 size_t numdisplaylines = 1;
 size_t numlines = 1;
-size_t lineoffset;
+size_t lineoffset = 0;
 
 // https://stackoverflow.com/a/7408245
 std::vector<std::string> split(const std::string &text, char sep)
@@ -43,11 +43,14 @@ std::vector<std::string> split(const std::string &text, char sep)
     return tokens;
 }
 
-void reset_x(WINDOW* win)
+void reset_x(WINDOW* win, bool notify = true)
 {
     int x, y;
     getyx(win, y, x);
     wmove(win, y, 0);
+
+    if(win == mainWindow && notify)
+        text.move(y + lineoffset, 0);
 }
 
 void clear_cmd_window()
@@ -55,14 +58,14 @@ void clear_cmd_window()
     for(auto& c : commands)
         c = ' ';
     waddstr(commandWindow, "                                                                                                                                              ");
-
-    reset_x(currWindow);
+    // don't notify because this is command window stuff
+    reset_x(currWindow, false);
 }
 
 void print_in_cmd_window(const char* c)
 {
     clear_cmd_window();
-    reset_x(commandWindow);
+    reset_x(commandWindow, false);
     waddstr(commandWindow, c);
     wrefresh(commandWindow);
     sleep(1);
@@ -106,17 +109,22 @@ void move_win_rel(WINDOW* win, int xoffs, int yoffs)
     int x, y;
     getyx(win, y, x);
 
-    if(y >= numdisplaylines+yoffs)
+    int capped_x, capped_y;
+    capped_y = y + yoffs;
+
+    if(capped_y > numdisplaylines-1)
     {
-        // scroll down if possible
-        if(numlines > numdisplaylines)
-            lineoffset++;
+        // we went over the edge, try to scroll
+        if(capped_y < numlines)
+            lineoffset += capped_y - numdisplaylines;
 
-        return;
-
+        capped_y = numdisplaylines-1;
     }
 
-    wmove(win, y+yoffs, x+xoffs);
+    capped_x = std::min((size_t)(x + xoffs), text.line_width(capped_y));
+
+    wmove(win, capped_y, capped_x);
+    text.move(capped_y + lineoffset, capped_x);
 }
 
 void resize_handler(int sigwinch)
@@ -234,8 +242,13 @@ int main(int argc, char** argv)
         {
             if(currWindow == mainWindow)
             {
+                int x, y;
+                getyx(mainWindow, y, x);
+                text.insert(y + lineoffset, x, in);
+
                 move_win_rel(currWindow, 0, 1);
-                reset_x(currWindow);
+                reset_x(currWindow, true);
+
             }
             else
             {

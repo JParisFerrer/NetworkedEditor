@@ -50,6 +50,12 @@ void BlockingVector::move(size_t line, size_t index){
     this->line=line;
 }
 
+size_t BlockingVector::line_width(size_t line)
+{
+    std::lock_guard<std::mutex> lock(vectorLock);
+    return this->data[line].size();
+}
+
 void BlockingVector::writeToFile(std::string fileName){
     //init file with vector data
     std::ofstream outFile;

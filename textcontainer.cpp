@@ -22,6 +22,12 @@ void TextContainer<T>::move(size_t line, size_t index){
 }
 
 template <typename T>
+size_t TextContainer<T>::line_width(size_t line)
+{
+    return this->container.line_width(line);
+}
+
+template <typename T>
 void TextContainer<T>::writeToFile(std::string fileName){
     this->container.writeToFile(fileName);
 }
