@@ -70,7 +70,7 @@ void BlockingVector::writeToFile(std::string fileName){
 
     for(size_t i = 0; i<this->data.size(); i++){
         for(size_t j = 0; j<this->data[i].size(); j++){
-            outFile<<data[i][j];
+            outFile << (char)data[i][j];
         }
         outFile << std::endl;
     }
