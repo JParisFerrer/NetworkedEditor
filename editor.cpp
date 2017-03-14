@@ -23,9 +23,9 @@ WINDOW* currWindow;
 TextContainer<BlockingVector> text;
 std::vector<int> commands;
 
-size_t numdisplaylines = 1;
-size_t numlines = 1;
-size_t lineoffset = 0;
+ssize_t numdisplaylines = 1;
+ssize_t numlines = 1;
+ssize_t lineoffset = 0;
 
 // https://stackoverflow.com/a/7408245
 std::vector<std::string> split(const std::string &text, char sep)
@@ -123,7 +123,13 @@ void move_win_rel(WINDOW* win, int xoffs, int yoffs)
             capped_y = numdisplaylines-1;
         }
 
+        if(capped_y < 0)
+            capped_y = 0;
+
         capped_x = std::min((size_t)(x + xoffs), text.line_width(capped_y));
+
+        if(capped_x < 0)
+            capped_x = 0;
 
         wmove(win, capped_y, capped_x);
         text.move(capped_y + lineoffset, capped_x);
@@ -359,6 +365,25 @@ int main(int argc, char** argv)
                     //data[y].erase(data[y].begin() + x);
                     //data[y].push_back(' ');
                     text.remove(y+lineoffset, x);
+                }
+            }
+            else // x == 0
+            {
+                if(y > 0 && currWindow == mainWindow)
+                {
+                    // save width of line above us
+                    size_t above_width = text.line_width(y-1);
+                    size_t us_width = text.line_width(y);
+                    
+                    // get the container to remove the line
+                    text.remove(y+lineoffset, -1);
+
+                    // only subtract numdisplaylines if we are running out of lines
+                    if(numlines == numdisplaylines)
+                        numdisplaylines--;
+                    numlines--;
+
+                    move_win_rel(mainWindow, above_width, -1);
                 }
             }
 

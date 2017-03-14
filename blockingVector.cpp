@@ -40,12 +40,20 @@ void BlockingVector::remove(size_t line, size_t index){
     std::vector<int>::iterator itHorzEnd=this->data[line].end();
     std::vector< std::vector<int> >::iterator itVert=this->data.begin();
 
-    if( index==0){
+    if( index== (size_t)-1){
         if(line!=0) {
+            if( data[line].size() > 0)
+            {
                 auto itAbove=this->data[line-1].end();
                 data[line-1].insert(itAbove, itHorz,itHorzEnd);
                 data.erase(itVert+line);
+            }
+            else
+            {
+                data.erase(itVert+line);
+            }
         }
+        
     }
     else{
         data[line].erase(itHorz+index);
