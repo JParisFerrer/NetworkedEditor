@@ -24,6 +24,8 @@ void BlockingVector::insert(size_t line, size_t index, int input){
         this->data.insert(itVert+line+1, std::vector<int> ());
         this->data[line+1].assign(itHorz+index, data[line].end());
         //this->data[line].erase(itHorz+index, data[line].end());
+        // get new iterators
+        this->data[line].erase(this->data[line].begin() + index, data[line].end());
     }
     else{
         this->data[line].insert(itHorz+index, input);
@@ -103,10 +105,14 @@ void BlockingVector::readFromFile(std::string fileName){
 void BlockingVector::print(size_t line,size_t maxWidth){
     std::lock_guard<std::mutex> lock(vectorLock);
 
-    for(size_t i = line; i < this->data.size(); i++){
+    size_t index = 0;
+    for(size_t i = line; i < this->data.size(); i++, index++){
+        // clear screen
+        wmove(mainWindow, index, 0);
+        waddstr(mainWindow, "                                                                                                                                                 ");   // clear line
         for(size_t j = 0; j < std::min(this->data[i].size(), maxWidth); j++){
             //std::cout << (char)data[i][j];
-            mvwaddch(mainWindow, i+line, j, this->data[i][j]);
+            mvwaddch(mainWindow, index, j, this->data[i][j]);
         }
         //std::cout<<std::endl;
     }
