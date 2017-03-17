@@ -109,6 +109,7 @@ size_t BlockingVector::readFromFile(std::string fileName){
     newvec.pop_back();
     data = std::move(newvec);
 
+    return data.size();
 }
 
 void BlockingVector::print(size_t line,size_t maxWidth){

@@ -335,7 +335,7 @@ int main(int argc, char** argv)
                                 print_in_cmd_window(std::to_string(v.size()).c_str());
                             }
                         }
-                        if(v[0] == "e")
+                        else if(v[0] == "e")
                         {
                             if(v.size() == 2)
                             {
@@ -360,14 +360,14 @@ int main(int argc, char** argv)
                                 print_in_cmd_window(c);
                                 free(c);        // I think it uses malloc
                             }
-                            
+                            else
+                            {
+                                // bad args
+                                print_in_cmd_window("Bad # of args: ");
+                                print_in_cmd_window(std::to_string(v.size()).c_str());
+                            }    
                         }
-                        else
-                        {
-                            // bad args
-                            print_in_cmd_window("Bad # of args: ");
-                            print_in_cmd_window(std::to_string(v.size()).c_str());
-                        }
+                        
                     }
 
 
