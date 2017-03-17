@@ -33,7 +33,7 @@ void TextContainer<T>::writeToFile(std::string fileName){
 }
 
 template <typename T>
-void TextContainer<T>::readFromFile(std::string fileName){
+size_t TextContainer<T>::readFromFile(std::string fileName){
     this->container.readFromFile(fileName);
 }
 

@@ -335,6 +335,39 @@ int main(int argc, char** argv)
                                 print_in_cmd_window(std::to_string(v.size()).c_str());
                             }
                         }
+                        if(v[0] == "e")
+                        {
+                            if(v.size() == 2)
+                            {
+                                size_t newlines = text.readFromFile(v[1]);
+                                char* c;
+
+                                move_win_rel(mainWindow, -9999999, -99999999);
+
+                                numlines = newlines;
+                                if(numlines > maxy)
+                                {
+                                    numdisplaylines = maxy;
+                                }
+                                else
+                                {
+                                    numdisplaylines = numlines;
+                                }
+
+                                wclear(mainWindow);
+
+                                asprintf(&c, "Read from file: %s, %lu lines", v[1].c_str(), newlines);
+                                print_in_cmd_window(c);
+                                free(c);        // I think it uses malloc
+                            }
+                            
+                        }
+                        else
+                        {
+                            // bad args
+                            print_in_cmd_window("Bad # of args: ");
+                            print_in_cmd_window(std::to_string(v.size()).c_str());
+                        }
                     }
 
 

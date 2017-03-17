@@ -85,27 +85,28 @@ void BlockingVector::writeToFile(std::string fileName){
 
 }
 
-void BlockingVector::readFromFile(std::string fileName){
+size_t BlockingVector::readFromFile(std::string fileName){
     std::lock_guard<std::mutex> lock(vectorLock);
     std::vector<std::vector<int>> newvec;
     //init vector with file data
     std::fstream in;
     in.open(fileName, std::fstream::in);
 
-    int inchar;
+    std::string line;
     size_t vecindex = 0;
     newvec.push_back(std::vector<int>());
 
-    while(in.good()){
-        in >> inchar;
-        if(inchar == '\n'){
-            vecindex++;
-            newvec.push_back(std::vector<int>());
+    while(std::getline(in, line)){
+        //in >> inchar;
+        for(const char & c : line)
+        {
+            newvec[vecindex].push_back(c);
         }
-        else{
-            newvec[vecindex].push_back(inchar);
-        }
+        vecindex++;
+        newvec.push_back(std::vector<int>());
     }
+    // the last line we don't need, it didn't actually exist
+    newvec.pop_back();
     data = std::move(newvec);
 
 }

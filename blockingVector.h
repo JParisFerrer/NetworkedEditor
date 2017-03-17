@@ -20,7 +20,7 @@ class BlockingVector {
         size_t line_width(size_t line);
 
         void writeToFile(std::string fileName);
-        void readFromFile(std::string fileName);
+        size_t readFromFile(std::string fileName);
         void print(size_t line,size_t maxWidth);
 
         /*debugging utilties*/
