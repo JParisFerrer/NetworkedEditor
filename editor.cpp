@@ -400,7 +400,41 @@ int main(int argc, char** argv)
         else if (in == DELETE_KEY)
         {
             // like backspace but the other way
+            int x, y;
+            getyx(currWindow, y, x);
 
+            if(currWindow == commandWindow)
+            {
+                //commands[x] = ' ';
+                commands.erase(commands.begin() + x);
+                commands.push_back(' ');
+                goto END;
+            }
+
+            if(x < text.line_width(y))
+            {
+                //data[y][x] = ' ';
+                //data[y].erase(data[y].begin() + x);
+                //data[y].push_back(' ');
+                text.remove(y+lineoffset, x);
+            }
+            else // x is last character
+            {
+                if(y < numlines-1)
+                {
+                    // save width of line above us
+                    size_t below_width = text.line_width(y+1);
+                    size_t us_width = text.line_width(y);
+                    
+                    // get the container to remove the line
+                    text.remove(y+lineoffset+1, -1);
+
+                    // only subtract numdisplaylines if we are running out of lines
+                    if(numlines == numdisplaylines)
+                        numdisplaylines--;
+                    numlines--;
+                }
+            }
         }
         else if (isprint(in))
         {
@@ -427,7 +461,7 @@ int main(int argc, char** argv)
             // that aren't already handled, like CTRL+W, etc
             //std::cerr << in << std::endl;
         }
-
+END:
 
         refresh_screen();
     }
