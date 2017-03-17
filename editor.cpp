@@ -365,9 +365,9 @@ int main(int argc, char** argv)
                                 // bad args
                                 print_in_cmd_window("Bad # of args: ");
                                 print_in_cmd_window(std::to_string(v.size()).c_str());
-                            }    
+                            }
                         }
-                        
+
                     }
 
 
@@ -386,6 +386,7 @@ int main(int argc, char** argv)
         }
         else if (in == KEY_BACKSPACE)
         {
+            std::cerr<<"SHOOT!";
             int x, y;
             getyx(currWindow, y, x);
 
@@ -416,7 +417,7 @@ int main(int argc, char** argv)
                     // save width of line above us
                     size_t above_width = text.line_width(y-1);
                     size_t us_width = text.line_width(y);
-                    
+
                     // get the container to remove the line
                     text.remove(y+lineoffset, -1);
 
@@ -458,7 +459,7 @@ int main(int argc, char** argv)
                     // save width of line above us
                     size_t below_width = text.line_width(y+1);
                     size_t us_width = text.line_width(y);
-                    
+
                     // get the container to remove the line
                     text.remove(y+lineoffset+1, -1);
 
