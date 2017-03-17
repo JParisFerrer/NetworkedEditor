@@ -14,6 +14,7 @@
 // the KEY_ENTER is wrong, use this constant instead
 #define ENTER_KEY 13
 #define CTRL_Q 17
+#define DELETE_KEY 330
 
 WINDOW* mainWindow;
 WINDOW* commandWindow;
@@ -117,14 +118,22 @@ void move_win_rel(WINDOW* win, int xoffs, int yoffs)
         if(capped_y > numdisplaylines-1)
         {
             // we went over the edge, try to scroll
-            if(capped_y < numlines)
-                lineoffset += capped_y - numdisplaylines;
+            if(lineoffset + capped_y < numlines)
+                lineoffset += capped_y - numdisplaylines + 1;
 
             capped_y = numdisplaylines-1;
         }
 
         if(capped_y < 0)
+        {
+            // we went over the edge, try to scroll
+            if(lineoffset > 0 && abs(capped_y) <= lineoffset)
+            {
+                lineoffset -= abs(capped_y);
+            }
+
             capped_y = 0;
+        }
 
         capped_x = std::min((size_t)(x + xoffs), text.line_width(capped_y));
 
@@ -388,6 +397,11 @@ int main(int argc, char** argv)
             }
 
         }
+        else if (in == DELETE_KEY)
+        {
+            // like backspace but the other way
+
+        }
         else if (isprint(in))
         {
             int x, y;
@@ -411,7 +425,7 @@ int main(int argc, char** argv)
 
             // this cerr used to get the keycodes of things
             // that aren't already handled, like CTRL+W, etc
-            //cerr << in << endl;
+            //std::cerr << in << std::endl;
         }
 
 
