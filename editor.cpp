@@ -220,7 +220,7 @@ void setup()
 }
 
 
-int main(int argc, char** argv)
+int client_entrypoint()
 {
     setup();
 
