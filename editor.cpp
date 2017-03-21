@@ -3,6 +3,14 @@
 #include <sstream>
 #include <unistd.h>
 #include <signal.h>
+#include <errno.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <netdb.h>
+#include <cstdlib>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <vector>
 #include <cstdio>
 #include "textcontainer.h"
@@ -19,6 +27,11 @@
 WINDOW* mainWindow;
 WINDOW* commandWindow;
 WINDOW* currWindow;
+
+extern std::string SERVER_PORT;
+extern std::string SERVER_ADDRESS;
+
+int SERVER_SOCKET;
 
 //vector<vector< int >> data;
 TextContainer<BlockingVector> text;
@@ -179,8 +192,62 @@ void resize_handler(int sigwinch)
     refresh_screen();
 }
 
-void setup()
+// credit to https://beej.us/guide/bgnet/output/html/multipage/clientserver.html
+int network_setup()
 {
+    struct addrinfo hints, *server_info, *traverser;
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_IPV4;
+    hints.ai_socktype = SOCK_STREAM;
+
+    int ret = getaddrinfo(SERVER_ADDRESS, SERVER_PORT, &hints, &server_info);
+    if(ret)
+    {
+        // would use cerr but formatting is nice
+        fprintf(stderr, "getaddrinfo failed: %s\n", gai_strerror(ret));
+        return 1;
+    }
+
+    int socket_fd;
+    // let's do this properly and loop through, choosing the first working method
+    for(traverser = server_info; traverser != NULL; traverser = traverser->ai_next) 
+    {
+        if ((socket_fd = socket(traverser->ai_family, traverser->ai_socktype, traverser->ai_protocol)) == -1) 
+        {
+            perror("client: socket");
+            continue;
+        }
+
+        if (connect(sockfd, traverser->ai_addr, traverser->ai_addrlen) == -1) 
+        {
+            close(socket_fd);
+            perror("client: connect");
+            continue;
+        }
+
+        // if we made it here, then we connected fine
+        break;
+    }
+
+    if (traverser == NULL)
+    {
+        fprintf("Failed to connect to '%s' using port '%s'", SERVER_ADDRESS, SERVER_PORT);
+        return 2;
+    }
+
+    SERVER_SOCKET = socket_fd;
+
+    return 0;
+}
+
+int setup()
+{
+    int ret = network_setup();
+
+    if(ret)
+        return ret;
+
     initscr();      // Init the library
     //cbreak();       // set it up so we read a character at a time
     raw();          // set it up so we read a character at a time
@@ -217,12 +284,23 @@ void setup()
     keypad(mainWindow, TRUE); // we should handle the special chars ourselves
     keypad(commandWindow, TRUE);
     keypad(stdscr, TRUE);
+
+    if(strcmp(SERVER_ADDRESS, "127.0.0.1") != 0)
+    {
+        char* c;
+        asprintf(&c, "Connected to %s", SERVER_ADDRESS.c_str());
+        print_in_cmd_window(c);
+        free(c);
+    }
 }
 
 
 int client_entrypoint()
 {
-    setup();
+    int ret = setup();
+
+    if(ret)
+        return ret;
 
     //waddstr(mainWindow, "hello world!");
     //waddstr(commandWindow, "hello world!");
@@ -238,8 +316,6 @@ int client_entrypoint()
 
     currWindow = mainWindow;
 
-    char s[2];
-    s[1] = '\0';
     int in;     // a char, but uses higher values for special chars
     while(1)
     {

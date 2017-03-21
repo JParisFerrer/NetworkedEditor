@@ -6,14 +6,16 @@
 #include <csignal>
 
 bool START_SERVER = false;
-int SERVER_PORT = 29629;
+std::string SERVER_ADDRESS = "127.0.0.1";
+std::string SERVER_PORT = "29629";
 
 pid_t SERVER_PID;
 
 void parse_opts(int argc, char** argv)
 {
     START_SERVER = true;
-    SERVER_PORT = 29629;
+    SERVER_PORT = "29629";
+    SERVER_ADDRESS = "127.0.0.1";
 }
 
 int main(int argc, char** argv)
@@ -42,6 +44,7 @@ int main(int argc, char** argv)
     }
 
     // pass in what the client should connect to
+    // actually just use externs
     int ret = client_entrypoint();
 
     // if we started the server, kill it
