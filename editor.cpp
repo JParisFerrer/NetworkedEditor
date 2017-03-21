@@ -236,6 +236,8 @@ int network_setup()
         return 2;
     }
 
+    freeaddrinfo(server_info);
+
     SERVER_SOCKET = socket_fd;
 
     return 0;
