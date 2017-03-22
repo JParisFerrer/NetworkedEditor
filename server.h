@@ -1,6 +1,11 @@
 #ifndef SERVER_H
 #define SERVER_H
 
-int server_entrypoint(int port);
+namespace server
+{
+
+    int server_entrypoint();
+
+}
 
 #endif

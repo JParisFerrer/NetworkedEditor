@@ -21,7 +21,7 @@ class BlockingVector {
 
         void writeToFile(std::string fileName);
         size_t readFromFile(std::string fileName);
-        void print(size_t line,size_t maxWidth);
+        void print(WINDOW* win, size_t line,size_t maxWidth);
 
         /*debugging utilties*/
         void printDebug();

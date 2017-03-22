@@ -112,17 +112,17 @@ size_t BlockingVector::readFromFile(std::string fileName){
     return data.size();
 }
 
-void BlockingVector::print(size_t line,size_t maxWidth){
+void BlockingVector::print(WINDOW* win, size_t line,size_t maxWidth){
     std::lock_guard<std::mutex> lock(vectorLock);
 
     size_t index = 0;
     for(size_t i = line; i < this->data.size(); i++, index++){
         // clear screen
-        wmove(mainWindow, index, 0);
-        waddstr(mainWindow, "                                                                                                                                                 ");   // clear line
+        wmove(win, index, 0);
+        waddstr(win, "                                                                                                                                                 ");   // clear line
         for(size_t j = 0; j < std::min(this->data[i].size(), maxWidth); j++){
             //std::cout << (char)data[i][j];
-            mvwaddch(mainWindow, index, j, this->data[i][j]);
+            mvwaddch(win, index, j, this->data[i][j]);
         }
         //std::cout<<std::endl;
     }

@@ -4,12 +4,14 @@
 #include <cstdio>
 #include <cstdlib>
 #include <csignal>
+#include <string>
 
 bool START_SERVER = false;
 std::string SERVER_ADDRESS = "127.0.0.1";
 std::string SERVER_PORT = "29629";
 
 pid_t SERVER_PID;
+
 
 void parse_opts(int argc, char** argv)
 {
@@ -54,7 +56,7 @@ int main(int argc, char** argv)
                 return 11;
             }
 
-            return server_entrypoint();
+            return server::server_entrypoint();
         }
         else
         {
@@ -65,7 +67,7 @@ int main(int argc, char** argv)
 
     // pass in what the client should connect to
     // actually just use externs
-    int ret = client_entrypoint();
+    int ret = client::client_entrypoint();
 
     // if we started the server, kill it
     // it should handle SIG_TERM to cleanup, then quit
