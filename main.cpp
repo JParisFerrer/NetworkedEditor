@@ -34,7 +34,27 @@ int main(int argc, char** argv)
         else if (child == 0)
         {
             // child
-            return server_entrypoint(SERVER_PORT);
+
+            // let's redirect stderr to a file
+            FILE* f = fopen("log.txt", "w");
+
+            if(!f)
+            {
+                perror("server's fopen");
+                return 10;
+            }
+
+            int fd = fileno(f);
+
+            int ret = dup2(fd, fileno(stderr));
+
+            if(ret)
+            {
+                perror("dup2");
+                return 11;
+            }
+
+            return server_entrypoint();
         }
         else
         {
