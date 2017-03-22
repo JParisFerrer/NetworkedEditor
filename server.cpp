@@ -8,8 +8,12 @@
 #include <cstdlib>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <vector>
 
 extern std::string SERVER_PORT;
+int SERVER_SOCKET;
+
+std::vector<pthread_t> threads;
 
 // credit to https://beej.us/guide/bgnet/output/html/multipage/clientserver.html
 int setup_network()
@@ -71,6 +75,8 @@ int setup_network()
         perror("listen");
         return 3;
     }
+
+    SERVER_SOCKET = socket_fd;
 }
 
 int setup()
@@ -85,9 +91,53 @@ int setup()
     return ret;
 }
 
+void* thread_routine(void* arg)
+{
+    int client_fd = (int)(long)arg;
+
+    // step 1 is to send the current text to them as data
+    
+
+    // now in the loop just handle the commands as they come in
+    while(1)
+    {
+
+    }
+
+    return client_fd;
+}
+
 int server_entrypoint()
 {
     setup();
+
+    struct sockaddr_storage client_addr;
+    socklen_t client_addr_size;
+
+    while(1)
+    {
+        client_addr_size = sizeof(client_addr);
+        int client_fd = accept(SERVER_SOCKET, (struct sockaddr*)&client_addr, &client_addr_size);
+
+        if(client_fd == -1)
+        {
+            perror("accept");
+            continue;
+        }
+
+        threads.push_back();
+        pthread_create(&threads.back(), NULL, thread_routine, (void*)(long)client_fd);
+    }
+
+    for(pthread_t & thread : threads)
+    {
+        int* sock = new int;
+
+        pthread_join(thread, &sock);
+
+        close(*sock);
+        delete sock;
+    }
 
     return 0;
 }
