@@ -39,18 +39,21 @@ int main(int argc, char** argv)
 
             // let's redirect stderr to a file
             FILE* f = fopen("log.txt", "w");
+            FILE* f2 = fopen("logerr.txt", "w");
 
-            if(!f)
+            if(!f || !f2)
             {
                 perror("server's fopen");
                 return 10;
             }
 
             int fd = fileno(f);
+            int fd2 = fileno(f2);
 
-            int ret = dup2(fd, fileno(stderr));
+            int ret = dup2(fd, fileno(stdout));
+            int ret2 = dup2(fd2, fileno(stderr));
 
-            if(ret == -1)
+            if(ret == -1 || ret2 == -1)
             {
                 perror("dup2");
                 return 11;
