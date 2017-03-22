@@ -50,7 +50,7 @@ int main(int argc, char** argv)
 
             int ret = dup2(fd, fileno(stderr));
 
-            if(ret)
+            if(ret == -1)
             {
                 perror("dup2");
                 return 11;

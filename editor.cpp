@@ -303,6 +303,7 @@ namespace client
 
     int client_entrypoint()
     {
+        sleep(1);
         int ret = setup();
 
         if(ret)
