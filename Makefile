@@ -5,20 +5,20 @@ EXENAME = editor
 
 all: $(EXENAME)
 
-$(EXENAME) : main.o editor.o server.o textcontainer.cpp textcontainer.h blockingVector.o
+$(EXENAME) : main.o editor.o server.o textcontainer.cpp textcontainer.h blockingVector.o networking.h
 	$(CXX) main.o editor.o server.o blockingVector.o $(LDFLAGS) -o editor
 
 main.o : main.cpp
 	$(CXX) $(CXXFLAGS) main.cpp
 
-server.o : server.cpp server.h
+server.o : server.cpp server.h networking.h
 	$(CXX) $(CXXFLAGS) server.cpp
 
-editor.o: editor.cpp editor.h
+editor.o: editor.cpp editor.h networking.h
 	$(CXX) $(CXXFLAGS) editor.cpp
 
 blockingVector.o: blockingVector.cpp blockingVector.h
 	$(CXX) $(CXXFLAGS) blockingVector.cpp
 
 clean:
-	-rm ./editor *.o
+	-rm .*.o /editor

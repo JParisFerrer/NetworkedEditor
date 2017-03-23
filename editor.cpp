@@ -1,22 +1,5 @@
-#include <curses.h>
-#include <iostream>
-#include <sstream>
-#include <unistd.h>
-#include <signal.h>
-#include <errno.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <netdb.h>
-#include <cstdlib>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <vector>
-#include <cstdio>
-#include "textcontainer.h"
-#include "blockingVector.h"
-
 //using namespace std;
+#include "editor.h"
 
 extern std::string SERVER_PORT;
 extern std::string SERVER_ADDRESS;
@@ -200,6 +183,7 @@ namespace client
     int network_setup()
     {
         struct addrinfo hints, *server_info, *traverser;
+        int yes = 1;
 
         memset(&hints, 0, sizeof(hints));
         hints.ai_family = AF_INET;
@@ -223,6 +207,12 @@ namespace client
                 continue;
             }
 
+            if (setsockopt(socket_fd, IPPROTO_TCP, TCP_NODELAY, (void*)&yes, sizeof(int)) == -1)
+            {
+                perror("setsockopt");
+                return 5;
+
+            }
             if (connect(socket_fd, traverser->ai_addr, traverser->ai_addrlen) == -1) 
             {
                 close(socket_fd);

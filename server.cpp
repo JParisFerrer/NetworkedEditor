@@ -1,18 +1,4 @@
-#include <unistd.h>
-#include <signal.h>
-#include <errno.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <netdb.h>
-#include <cstdlib>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <vector>
-#include <pthread.h>
-#include <cstdio>
-#include <string>
-
+#include "server.h"
 
 extern std::string SERVER_PORT;
 
@@ -53,7 +39,8 @@ namespace server
                 continue;
             }
 
-            if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) 
+            if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1 || 
+                    setsockopt(socket_fd, IPPROTO_TCP, TCP_NODELAY, (void*)&yes, sizeof(int)) == -1) 
             {
                 perror("setsockopt");
                 return 2;
@@ -131,6 +118,13 @@ namespace server
             {
                 perror("accept");
                 continue;
+            }
+
+            int yes = 1;
+            if (setsockopt(client_fd, IPPROTO_TCP, TCP_NODELAY, (void*)&yes, sizeof(int)) == -1)
+            {
+                perror("setsockopt");
+                return 5;
             }
 
             threads.push_back(pthread_t());
