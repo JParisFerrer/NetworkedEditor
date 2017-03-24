@@ -84,6 +84,7 @@ std::pair<char*,size_t> get_message(int sock)
         {
             free(retbuf);
             free(tbuf);
+            perror("[get_message] recv");
             return std::make_pair(nullptr, 0);
         }
 
@@ -151,6 +152,7 @@ bool send_bytes(int sock, char* buf, size_t num_bytes)
             }
             else 
             {
+                perror("[send_bytes] send");
                 return false;
             }
         }
@@ -164,4 +166,21 @@ bool send_bytes(int sock, char* buf, size_t num_bytes)
     send(sock, MESSAGE_FOOTER, HEADER_LENGTH, 0);
 
     return true;
+}
+
+bool send_move(int sock, size_t y, size_t x)
+{
+    size_t len = sizeof(short) + 2 * sizeof(size_t);
+    char* buf = new char[len];
+
+    *(short*)buf = (short)PacketType::Move;
+    *(size_t*)(buf + sizeof(short)) = y;
+    *(size_t*)(buf + sizeof(short) + sizeof(size_t)) = x;
+
+    bool ret = send_bytes(sock, buf, len);
+
+    if(!ret)
+    {
+        fprintf(stderr, "[!!!] [%s] Bad return value\n", __func__);
+    }
 }

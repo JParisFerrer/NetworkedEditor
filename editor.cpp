@@ -44,6 +44,12 @@ namespace client
         return tokens;
     }
 
+    void move_cursor(size_t y, size_t x)
+    {
+        text.move(y, x);
+        send_move(SERVER_SOCKET, y, x);
+    }
+
     void reset_x(WINDOW* win, bool notify = true)
     {
         int x, y;
@@ -51,7 +57,8 @@ namespace client
         wmove(win, y, 0);
 
         if(win == mainWindow && notify)
-            text.move(y + lineoffset, 0);
+            move_cursor(y + lineoffset, 0);
+            //text.move(y + lineoffset, 0);
     }
 
     void clear_cmd_window()
@@ -141,7 +148,8 @@ namespace client
                 capped_x = 0;
 
             wmove(win, capped_y, capped_x);
-            text.move(capped_y + lineoffset, capped_x);
+            //text.move(capped_y + lineoffset, capped_x);
+            move_cursor(capped_y + lineoffset, capped_x);
         }
         else
         {

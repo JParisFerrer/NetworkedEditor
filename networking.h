@@ -19,7 +19,7 @@ const char MESSAGE_FOOTER[] = { 4, 4, 4, 4, 4, 4, 4, 4, 4, 4 };
 const int HEADER_LENGTH = 10;
 
 // this is a short, 65536 message types should be enough
-enum class PacketType
+enum class PacketType : short
 {
     Debug = 0,
     Logging,
@@ -29,7 +29,12 @@ enum class PacketType
     GetFull
 };
 
+
+std::pair<char*,size_t> get_message(int sock);
+
 // will loop and send all the bytes
 bool send_bytes(int sock, char* buf, size_t num_bytes);
+
+bool send_move(int sock, size_t y, size_t x);
 
 #endif
