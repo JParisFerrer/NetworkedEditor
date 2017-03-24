@@ -96,7 +96,35 @@ namespace server
         // now in the loop just handle the commands as they come in
         while(1)
         {
+            std::pair<char*, size_t> msg = get_message(client_fd);
 
+            if(msg.first == nullptr)
+            {
+                fprintf(stderr, "[!!] Server got bad message!\n");
+                continue;
+            }
+
+            PacketType type = get_bytes_as<PacketType>(msg.first, 0);
+
+            switch(type)
+            {
+                case PacketType::Move:
+
+                    break;
+
+                case PacketType::Insert:
+
+                    break;
+
+                case PacketType::Remove:
+
+                    break;
+
+                default:
+
+                    fprintf(stderr, "[!] Server got unhandled message type '%d'\n", type);
+                    break;
+            }
         }
 
         return (void*)(long)client_fd;

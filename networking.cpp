@@ -109,7 +109,7 @@ std::pair<char*,size_t> get_message(int sock)
 
             free(tbuf);
 
-            return std::make_pair(retbuf, total_got + actually_read);
+            return std::make_pair(retbuf + HEADER_LENGTH, total_got + actually_read - 2 * HEADER_LENGTH);
         }
         // else keep going
 
@@ -126,6 +126,12 @@ std::pair<char*,size_t> get_message(int sock)
     free(tbuf);
 
     return std::make_pair(retbuf, total_got);
+}
+
+
+void free_message(char* msg)
+{
+    free(msg - HEADER_LENGTH);
 }
 
 bool send_message(int sock, char* buf, size_t num_bytes)

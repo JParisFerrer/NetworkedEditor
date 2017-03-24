@@ -32,6 +32,14 @@ enum class PacketType : short
 
 std::pair<char*,size_t> get_message(int sock);
 
+template <typename T>
+T get_bytes_as(char* msg, size_t start_byte)
+{
+    return *(T*)(msg + start_byte);
+}
+
+void free_message(char* msg);
+
 // will loop and send all the bytes
 bool send_message(int sock, char* buf, size_t num_bytes);
 
