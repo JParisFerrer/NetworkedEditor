@@ -33,7 +33,7 @@ enum class PacketType : short
 std::pair<char*,size_t> get_message(int sock);
 
 // will loop and send all the bytes
-bool send_bytes(int sock, char* buf, size_t num_bytes);
+bool send_message(int sock, char* buf, size_t num_bytes);
 
 bool send_move(int sock, size_t y, size_t x);
 

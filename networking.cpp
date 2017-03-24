@@ -128,7 +128,7 @@ std::pair<char*,size_t> get_message(int sock)
     return std::make_pair(retbuf, total_got);
 }
 
-bool send_bytes(int sock, char* buf, size_t num_bytes)
+bool send_message(int sock, char* buf, size_t num_bytes)
 {
     size_t left = num_bytes;
     size_t total_sent = 0;
@@ -152,7 +152,7 @@ bool send_bytes(int sock, char* buf, size_t num_bytes)
             }
             else 
             {
-                perror("[send_bytes] send");
+                perror("[send_message] send");
                 return false;
             }
         }
@@ -177,7 +177,7 @@ bool send_move(int sock, size_t y, size_t x)
     *(size_t*)(buf + sizeof(short)) = y;
     *(size_t*)(buf + sizeof(short) + sizeof(size_t)) = x;
 
-    bool ret = send_bytes(sock, buf, len);
+    bool ret = send_message(sock, buf, len);
 
     if(!ret)
     {
@@ -196,7 +196,7 @@ bool send_insert(int sock, size_t y, size_t x, int c)
     *(size_t*)(buf + sizeof(short) + sizeof(size_t)) = x;
     *(int*)(buf + sizeof(short) + 2*sizeof(size_t)) = c;
 
-    bool ret = send_bytes(sock, buf, len);
+    bool ret = send_message(sock, buf, len);
 
     if(!ret)
     {
@@ -216,7 +216,7 @@ bool send_remove(int sock, size_t y, size_t x)
     *(size_t*)(buf + sizeof(short)) = y;
     *(size_t*)(buf + sizeof(short) + sizeof(size_t)) = x;
 
-    bool ret = send_bytes(sock, buf, len);
+    bool ret = send_message(sock, buf, len);
 
     if(!ret)
     {
