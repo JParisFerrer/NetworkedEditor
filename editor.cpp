@@ -199,7 +199,7 @@ namespace client
 
         int socket_fd;
         // let's do this properly and loop through, choosing the first working method
-        for(traverser = server_info; traverser != NULL; traverser = traverser->ai_next) 
+        for(traverser = server_info; traverser != nullptr; traverser = traverser->ai_next) 
         {
             if ((socket_fd = socket(traverser->ai_family, traverser->ai_socktype, traverser->ai_protocol)) == -1) 
             {
@@ -224,7 +224,7 @@ namespace client
             break;
         }
 
-        if (traverser == NULL)
+        if (traverser == nullptr)
         {
             fprintf(stderr, "Failed to connect to '%s' using port '%s'", SERVER_ADDRESS.c_str(), SERVER_PORT.c_str());
             return 2;

@@ -10,8 +10,13 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netinet/tcp.h>
+#include <cstring>
 
 #define MTU 1280
+
+const char MESSAGE_HEADER[] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+const char MESSAGE_FOOTER[] = { 4, 4, 4, 4, 4, 4, 4, 4, 4, 4 };
+const int HEADER_LENGTH = 10;
 
 // this is a short, 65536 message types should be enough
 enum class PacketType

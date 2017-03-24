@@ -20,7 +20,7 @@ namespace server
         hints.ai_socktype = SOCK_STREAM;
         hints.ai_flags = AI_PASSIVE;
 
-        int ret = getaddrinfo(NULL, SERVER_PORT.c_str(), &hints, &server_info);
+        int ret = getaddrinfo(nullptr, SERVER_PORT.c_str(), &hints, &server_info);
 
         if(ret)
         {
@@ -31,7 +31,7 @@ namespace server
         int socket_fd;
         int yes = 1;
 
-        for(trav = server_info; trav != NULL; trav = trav->ai_next) 
+        for(trav = server_info; trav != nullptr; trav = trav->ai_next) 
         {
             if ((socket_fd = socket(trav->ai_family, trav->ai_socktype, trav->ai_protocol)) == -1) 
             {
@@ -59,7 +59,7 @@ namespace server
 
         freeaddrinfo(server_info);
 
-        if(trav == NULL)
+        if(trav == nullptr)
         {
             fprintf(stderr, "Server failed to bind\n");
             return 3;
@@ -128,7 +128,7 @@ namespace server
             }
 
             threads.push_back(pthread_t());
-            pthread_create(&threads.back(), NULL, thread_routine, (void*)(long)client_fd);
+            pthread_create(&threads.back(), nullptr, thread_routine, (void*)(long)client_fd);
         }
 
         for(pthread_t & thread : threads)
