@@ -202,4 +202,26 @@ bool send_insert(int sock, size_t y, size_t x, int c)
     {
         fprintf(stderr, "[!!!] [%s] Bad return value\n", __func__);
     }
+
+    return ret;
+}
+
+
+bool send_remove(int sock, size_t y, size_t x)
+{
+    size_t len = sizeof(short) + 2 * sizeof(size_t);
+    char* buf = new char[len];
+
+    *(short*)buf = (short)PacketType::Remove;
+    *(size_t*)(buf + sizeof(short)) = y;
+    *(size_t*)(buf + sizeof(short) + sizeof(size_t)) = x;
+
+    bool ret = send_bytes(sock, buf, len);
+
+    if(!ret)
+    {
+        fprintf(stderr, "[!!!] [%s] Bad return value\n", __func__);
+    }
+
+    return ret;
 }

@@ -56,6 +56,12 @@ namespace client
         send_insert(SERVER_SOCKET, y, x, c);
     }
 
+    void remove_char(size_t y, size_t x)
+    {
+        text.remove(y, x);
+        send_remove(SERVER_SOCKET, y, x);
+    }
+
     void reset_x(WINDOW* win, bool notify = true)
     {
         int x, y;
@@ -494,7 +500,8 @@ namespace client
                         //data[y][x] = ' ';
                         //data[y].erase(data[y].begin() + x);
                         //data[y].push_back(' ');
-                        text.remove(y+lineoffset, x);
+                        //text.remove(y+lineoffset, x);
+                        remove_char(y + lineoffset, x);
                     }
                 }
                 else // x == 0
@@ -506,7 +513,8 @@ namespace client
                         size_t us_width = text.line_width(y);
 
                         // get the container to remove the line
-                        text.remove(y+lineoffset, -1);
+                        //text.remove(y+lineoffset, -1);
+                        remove_char(y + lineoffset, -1);
 
                         // only subtract numdisplaylines if we are running out of lines
                         if(numlines == numdisplaylines)
@@ -537,7 +545,8 @@ namespace client
                     //data[y][x] = ' ';
                     //data[y].erase(data[y].begin() + x);
                     //data[y].push_back(' ');
-                    text.remove(y+lineoffset, x);
+                    //text.remove(y+lineoffset, x);
+                    remove_char(y + lineoffset, x);
                 }
                 else // x is last character
                 {
@@ -548,7 +557,8 @@ namespace client
                         size_t us_width = text.line_width(y);
 
                         // get the container to remove the line
-                        text.remove(y+lineoffset+1, -1);
+                        //text.remove(y+lineoffset+1, -1);
+                        remove_char(y + lineoffset, -1);
 
                         // only subtract numdisplaylines if we are running out of lines
                         if(numlines == numdisplaylines)
