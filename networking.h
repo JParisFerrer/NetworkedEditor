@@ -37,4 +37,6 @@ bool send_bytes(int sock, char* buf, size_t num_bytes);
 
 bool send_move(int sock, size_t y, size_t x);
 
+bool send_insert(int sock, size_t y, size_t x, int c);
+
 #endif

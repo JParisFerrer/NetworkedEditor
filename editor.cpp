@@ -50,6 +50,12 @@ namespace client
         send_move(SERVER_SOCKET, y, x);
     }
 
+    void insert_char(size_t y, size_t x, int c)
+    {
+        text.insert(y, x, c);
+        send_insert(SERVER_SOCKET, y, x, c);
+    }
+
     void reset_x(WINDOW* win, bool notify = true)
     {
         int x, y;
@@ -357,7 +363,8 @@ namespace client
                     if(numdisplaylines < maxy)
                         numdisplaylines++;
 
-                    text.insert(y + lineoffset, x, in);
+                    //text.insert(y + lineoffset, x, in);
+                    insert_char(y + lineoffset, x, in);
 
                     move_win_rel(currWindow, 0, 1);
                     reset_x(currWindow, true);
@@ -562,7 +569,8 @@ namespace client
                 else
                 {
                     //data[y][x] = in;
-                    text.insert(y + lineoffset, x, in);
+                    //text.insert(y + lineoffset, x, in);
+                    insert_char(y + lineoffset, x, in);
                 }
 
                 move_win_rel(currWindow, 1, 0);
