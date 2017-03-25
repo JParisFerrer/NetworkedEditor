@@ -12,7 +12,6 @@ std::string SERVER_PORT = "29629";
 
 pid_t SERVER_PID;
 
-
 void parse_opts(int argc, char** argv)
 {
     START_SERVER = true;
@@ -59,7 +58,11 @@ int main(int argc, char** argv)
                 return 11;
             }
 
-            return server::server_entrypoint();
+            int server_ret = server::server_entrypoint();
+
+            fclose(f);
+            fclose(f2);
+            return server_ret;
         }
         else
         {
@@ -68,6 +71,21 @@ int main(int argc, char** argv)
         }
     }
 
+    FILE* f = fopen("clogerr.txt", "w");
+    if(!f)
+    {
+        perror("client's fopen");
+
+        if(START_SERVER)
+        {
+            kill(SERVER_PID, SIGTERM);
+        }
+
+        return 20;
+    }
+
+    dup2(fileno(f), fileno(stderr));
+
     // pass in what the client should connect to
     // actually just use externs
     int ret = client::client_entrypoint();
@@ -75,7 +93,11 @@ int main(int argc, char** argv)
     // if we started the server, kill it
     // it should handle SIG_TERM to cleanup, then quit
     if(START_SERVER)
+    {
         kill(SERVER_PID, SIGTERM);
+    }
+
+    fclose(f);
 
     return ret;
 }

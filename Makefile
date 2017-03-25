@@ -8,13 +8,13 @@ all: $(EXENAME)
 $(EXENAME) : main.o editor.o server.o textcontainer.cpp textcontainer.h blockingVector.o networking.o
 	$(CXX) main.o editor.o server.o blockingVector.o networking.o $(LDFLAGS) -o editor
 
-main.o : main.cpp editor.o server.o
+main.o : main.cpp editor.h server.h
 	$(CXX) $(CXXFLAGS) main.cpp
 
-server.o : server.cpp server.h networking.o
+server.o : server.cpp server.h networking.h
 	$(CXX) $(CXXFLAGS) server.cpp
 
-editor.o: editor.cpp editor.h networking.o
+editor.o: editor.cpp editor.h networking.h
 	$(CXX) $(CXXFLAGS) editor.cpp
 
 networking.o: networking.cpp networking.h

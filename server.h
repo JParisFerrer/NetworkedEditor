@@ -16,6 +16,7 @@
 #include <pthread.h>
 #include <cstdio>
 #include <string>
+#include <iostream>
 #include "networking.h"
 
 

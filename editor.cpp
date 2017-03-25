@@ -262,7 +262,10 @@ namespace client
         int ret = network_setup();
 
         if(ret)
+        {
+            fprintf(stderr, "Error in networking setup! code: %d\n", ret);
             return ret;
+        }
 
         initscr();      // Init the library
         //cbreak();       // set it up so we read a character at a time
@@ -317,7 +320,11 @@ namespace client
         int ret = setup();
 
         if(ret)
+        {
+            endwin();
+            fprintf(stderr, "Error in setup! code: %d\n", ret);
             return ret;
+        }
 
         //waddstr(mainWindow, "hello world!");
         //waddstr(commandWindow, "hello world!");
@@ -599,6 +606,8 @@ END:
         }
 
         endwin();
+
+        fprintf(stderr, "Client exiting normally\n");
 
         return 0;
     }

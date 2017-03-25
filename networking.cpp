@@ -6,7 +6,7 @@ bool footer_could_exist(char* buf)
     bool chain = 0;
     int same = 0;
 
-    for(int i = 0; i < HEADER_LENGTH, same < HEADER_LENGTH; i++)
+    for(int i = 0; i < HEADER_LENGTH && same < HEADER_LENGTH; i++)
     {
         if(buf[i] == MESSAGE_FOOTER[same])
         {
@@ -29,7 +29,7 @@ std::pair<bool, size_t> footer_exists(char* buf, size_t len)
     int same = 0;
 
     size_t i;
-    for(i = 0; i < len, same < HEADER_LENGTH; i++)
+    for(i = 0; i < len && same < HEADER_LENGTH; i++)
     {
         if(buf[i] == MESSAGE_FOOTER[same])
         {
@@ -64,6 +64,14 @@ std::pair<char*,size_t> get_message(int sock)
         // peek so that we can only read what we need to get the footer
         ssize_t got = recv(sock, tbuf, MTU, MSG_PEEK );
 
+        if(got < 0)
+        {
+            free(retbuf);
+            free(tbuf);
+            perror("[get_message] recv");
+            return std::make_pair(nullptr, 0);
+        }
+
         if(total_got == 0)
         {
             // verify we are getting a message header
@@ -72,21 +80,12 @@ std::pair<char*,size_t> get_message(int sock)
             strncpy(t, MESSAGE_HEADER, HEADER_LENGTH);
             t[HEADER_LENGTH] = 0;
 
-            // because we calloced this should be fine
-            if(strcmp(t, tbuf) != 0)
+            if(strncmp(t, tbuf, HEADER_LENGTH) != 0)
             {
                 // we didn't read a header
                 fprintf(stderr, "[!!!] Bad header read! Got '%s' expected '%s'\n", tbuf, t);
             }
-        }
-
-        if(got < 0)
-        {
-            free(retbuf);
-            free(tbuf);
-            perror("[get_message] recv");
-            return std::make_pair(nullptr, 0);
-        }
+        } 
 
         // scan for the footer
         ssize_t off = std::max((ssize_t)total_got - HEADER_LENGTH, 0L);
@@ -140,12 +139,14 @@ bool send_message(int sock, char* buf, size_t num_bytes)
     size_t total_sent = 0;
     int mtu = MTU;
 
-    send(sock, MESSAGE_HEADER, HEADER_LENGTH, MSG_MORE);
+    //send(sock, MESSAGE_HEADER, HEADER_LENGTH, MSG_MORE);
+    send(sock, MESSAGE_HEADER, HEADER_LENGTH, 0);
 
     while(left > 0)
     {
         //int flags = (left > mtu ? MSG_MORE : 0);
         int flags = (MSG_MORE);     // due to header/footer we need to add more every time
+        flags = 0;
         ssize_t sent = send(sock, buf + total_sent, std::min(left, (size_t)mtu), flags);
 
         if(sent == -1)

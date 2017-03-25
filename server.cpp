@@ -9,6 +9,13 @@ namespace server
 
     std::vector<pthread_t> threads;
 
+    void sigterm_handler(int sig)
+    {
+        fprintf(stderr, "Got SIGTERM\n");
+        fclose(stderr);
+        fclose(stdout);
+    }
+
     // credit to https://beej.us/guide/bgnet/output/html/multipage/clientserver.html
     int setup_network()
     {
@@ -72,6 +79,8 @@ namespace server
         }
 
         SERVER_SOCKET = socket_fd;
+
+        std::cout << "Finished setting up server's network" << std::endl;
     }
 
     int setup()
@@ -83,12 +92,18 @@ namespace server
 
         // other stuff
 
+        signal(SIGTERM, sigterm_handler);
+
+        std::cout << "Finished setting up server" << std::endl;
+
         return ret;
     }
 
     void* thread_routine(void* arg)
     {
         int client_fd = (int)(long)arg;
+
+        std::cout << "Thread starting up" << std::endl;
 
         // step 1 is to send the current text to them as data
 
@@ -109,15 +124,15 @@ namespace server
             switch(type)
             {
                 case PacketType::Move:
-
+                    //fprintf(stdout, "Got move!\n");
                     break;
 
                 case PacketType::Insert:
-
+                    //fprintf(stdout, "Got insert!\n");
                     break;
 
                 case PacketType::Remove:
-
+                    //fprintf(stdout, "Got remove!\n");
                     break;
 
                 default:
@@ -125,7 +140,11 @@ namespace server
                     fprintf(stderr, "[!] Server got unhandled message type '%d'\n", type);
                     break;
             }
+
+            free_message(msg.first);
         }
+
+        std::cout << "Thread shutting down" << std::endl;
 
         return (void*)(long)client_fd;
     }
@@ -159,6 +178,8 @@ namespace server
             pthread_create(&threads.back(), nullptr, thread_routine, (void*)(long)client_fd);
         }
 
+        std::cout << "Joining threads" << std::endl;
+
         for(pthread_t & thread : threads)
         {
             int* sock = new int;
@@ -168,6 +189,8 @@ namespace server
             close(*sock);
             delete sock;
         }
+
+        std::cout << "Serving done" << std::endl;
 
         return 0;
     }
