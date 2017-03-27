@@ -59,16 +59,22 @@ std::pair<char*,size_t> get_message(int sock)
 
     size_t total_got = 0;
 
+    int flags = MSG_DONTWAIT;
+
     while(1)
     {
         // peek so that we can only read what we need to get the footer
-        ssize_t got = recv(sock, tbuf, MTU, MSG_PEEK );
+        ssize_t got = recv(sock, tbuf, MTU, MSG_PEEK | flags);
 
-        if(got < 0)
+        // only don't block the first time
+        flags = 0;
+
+        if(got <= 0)
         {
             free(retbuf);
             free(tbuf);
-            perror("[get_message] recv");
+            if(get != 0 && !(errno == EAGAIN || errno == EWOULDBLOCK))
+                perror("[get_message] recv");
             return std::make_pair(nullptr, 0);
         }
 
@@ -229,6 +235,37 @@ bool send_remove(int sock, size_t y, size_t x)
     {
         fprintf(stderr, "[!!!] [%s] Bad return value\n", __func__);
     }
+
+    return ret;
+}
+
+bool send_write(int sock);
+{
+    size_t len = sizeof(short);
+    char* buf = new char[len];
+
+    *(short*)buf = (short)PacketType::WriteToDisk;
+
+    bool ret = send_message(sock, buf, len);
+
+    if(!ret)
+        fprintf(stderr, "[!!!] [%s] bad return value\n", __func__);
+
+    return ret;
+}
+
+bool send_read(int sock, std::string filename)
+{
+    size_t len = sizeof(short) + filename.length() + 1;
+    char* buf = new char[len];
+
+    *(short*)buf = (short)PacketType::ReadFromDisk;
+    strncpy(buf + sizeof(short), filename.c_str(), filename.length()+1);
+
+    bool ret = send_message(sock, buf, len);
+
+    if(!ret)
+        fprintf(stderr, "[!!!] [%s] bad return value\n", __func__);
 
     return ret;
 }

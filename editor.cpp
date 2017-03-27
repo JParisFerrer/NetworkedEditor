@@ -410,24 +410,15 @@ namespace client
                                 if(v.size() == 2)
                                 {
                                     /*
-                                       FILE* file = fopen(v[1].c_str(), "w");
-                                       for(auto& v1 : data)
-                                       {
-                                       for(auto& c : v1)
-                                       {
-                                       fwrite(&c, 1, 1, file);
-                                       }
-                                       fwrite("\n", 1, 1, file);
-                                       }
-
-                                       fclose(file);
-                                       */
                                     text.writeToFile(v[1]);
                                     char* c;
 
                                     asprintf(&c, "Saved file: %s", v[1].c_str());
                                     print_in_cmd_window(c);
                                     free(c);        // I think it uses malloc
+                                    */
+
+                                    send_write(SERVER_SOCKET);
                                 }
                                 else
                                 {
@@ -440,6 +431,7 @@ namespace client
                             {
                                 if(v.size() == 2)
                                 {
+                                    /*
                                     size_t newlines = text.readFromFile(v[1]);
                                     char* c;
 
@@ -460,6 +452,9 @@ namespace client
                                     asprintf(&c, "Read from file: %s, %lu lines", v[1].c_str(), newlines);
                                     print_in_cmd_window(c);
                                     free(c);        // I think it uses malloc
+                                    */
+
+                                    send_read(SERVER_SOCKET, v[1]);
                                 }
                                 else
                                 {
