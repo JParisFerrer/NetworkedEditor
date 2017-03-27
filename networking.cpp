@@ -239,12 +239,13 @@ bool send_remove(int sock, size_t y, size_t x)
     return ret;
 }
 
-bool send_write(int sock);
+bool send_write(int sock, std::string filename);
 {
-    size_t len = sizeof(short);
+    size_t len = sizeof(short) + filename.length() + 1;
     char* buf = new char[len];
 
     *(short*)buf = (short)PacketType::WriteToDisk;
+    strncpy(buf + sizeof(short), filename.c_str(), filename.length() + 1);
 
     bool ret = send_message(sock, buf, len);
 

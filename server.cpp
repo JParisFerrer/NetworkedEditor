@@ -135,6 +135,16 @@ namespace server
                     //fprintf(stdout, "Got remove!\n");
                     break;
 
+                case PacketType::WriteToDisk:
+                    // rest of bytes are a filename
+
+                    break;
+
+                case PacketType::ReadFromDisk:
+                    // rest of bytes are a filename
+
+                    break;
+
                 default:
 
                     fprintf(stderr, "[!] Server got unhandled message type '%d'\n", type);

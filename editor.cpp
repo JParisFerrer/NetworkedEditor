@@ -418,7 +418,7 @@ namespace client
                                     free(c);        // I think it uses malloc
                                     */
 
-                                    send_write(SERVER_SOCKET);
+                                    send_write(SERVER_SOCKET, v[1]);
                                 }
                                 else
                                 {

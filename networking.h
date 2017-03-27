@@ -53,7 +53,7 @@ bool send_insert(int sock, size_t y, size_t x, int c);
 
 bool send_remove(int sock, size_t y, size_t x);
 
-bool send_write(int sock);
+bool send_write(int sock, std::string filename);
 
 bool send_read(int sock, std::string filename);
 
