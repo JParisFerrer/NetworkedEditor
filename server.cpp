@@ -14,6 +14,8 @@ namespace server
         fprintf(stderr, "Got SIGTERM\n");
         fclose(stderr);
         fclose(stdout);
+
+        exit(1);
     }
 
     // credit to https://beej.us/guide/bgnet/output/html/multipage/clientserver.html
@@ -47,7 +49,9 @@ namespace server
             }
 
             if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1 || 
-                    setsockopt(socket_fd, IPPROTO_TCP, TCP_NODELAY, (void*)&yes, sizeof(int)) == -1) 
+                    setsockopt(socket_fd, IPPROTO_TCP, TCP_NODELAY, (void*)&yes, sizeof(int)) == -1
+                    || setsockopt(socket_fd, SOL_SOCKET, SO_KEEPALIVE, &yes, sizeof(int)) == -1 
+                )
             {
                 perror("setsockopt");
                 return 2;
@@ -55,8 +59,8 @@ namespace server
 
             if (bind(socket_fd, trav->ai_addr, trav->ai_addrlen) == -1) 
             {
-                close(socket_fd);
                 perror("server: bind");
+                close(socket_fd);
                 continue;
             }
 
@@ -81,6 +85,8 @@ namespace server
         SERVER_SOCKET = socket_fd;
 
         std::cout << "Finished setting up server's network" << std::endl;
+
+        return 0;
     }
 
     int setup()
@@ -93,6 +99,9 @@ namespace server
         // other stuff
 
         signal(SIGTERM, sigterm_handler);
+        //signal(SIGINT, SIG_IGN);
+        signal(SIGINT, sigterm_handler);
+
 
         std::cout << "Finished setting up server" << std::endl;
 
@@ -113,13 +122,22 @@ namespace server
         {
             std::pair<char*, size_t> msg = get_message(client_fd);
 
-            if(msg.first == nullptr)
+            // returns non-zero in second arg if it was error, else just no data
+            // annoying here but used for the client code to not block
+            if(msg.first == nullptr && msg.second)
             {
                 fprintf(stderr, "[!!] Server got bad message!\n");
                 continue;
             }
+            else if (msg.first == nullptr)
+            {
+                // just a normal non-block
+                continue;
+            }
 
             PacketType type = get_bytes_as<PacketType>(msg.first, 0);
+
+            //fprintf(stdout, "Got message of type %d\n", type);
 
             switch(type)
             {

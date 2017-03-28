@@ -27,6 +27,7 @@ namespace client
 
     int client_entrypoint();
 
+    void exit_handler(int sigint);
 }
 
 #endif

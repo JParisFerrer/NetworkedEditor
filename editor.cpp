@@ -95,6 +95,7 @@ namespace client
 
     void refresh_screen()
     {
+        //fprintf(stderr, "in function %s\n", __func__);
         int sx_main, sy_main, sx_command, sy_command;
         int maxx, maxy;
         getmaxyx(stdscr, maxy, maxx);
@@ -122,10 +123,13 @@ namespace client
         wrefresh(commandWindow);
         wrefresh(currWindow);       // the cursor is drawn on refresh
 
+        //fprintf(stderr, "left function %s\n", __func__);
     }
 
     void move_win_rel(WINDOW* win, int xoffs, int yoffs)
     {
+        //fprintf(stderr, "in function %s\n", __func__);
+
         int x, y;
         getyx(win, y, x);
 
@@ -170,10 +174,23 @@ namespace client
 
             wmove(win, 0, capped_x);
         }
+
+        //fprintf(stderr, "left function %s\n", __func__);
+
+    }
+
+    void exit_handler(int sigint)
+    {
+        fprintf(stderr, "in function %s\n", __func__);
+
+        endwin();
+        exit(1);
     }
 
     void resize_handler(int sigwinch)
     {
+        fprintf(stderr, "in function %s\n", __func__);
+
         endwin();
         refresh();
         clear();
@@ -197,11 +214,15 @@ namespace client
         commands.resize(w, ' ');
 
         refresh_screen();
+
+        fprintf(stderr, "left function %s\n", __func__);
     }
 
     // credit to https://beej.us/guide/bgnet/output/html/multipage/clientserver.html
     int network_setup()
     {
+        fprintf(stderr, "in function %s\n", __func__);
+
         struct addrinfo hints, *server_info, *traverser;
         int yes = 1;
 
@@ -259,7 +280,11 @@ namespace client
 
     int setup()
     {
+        fprintf(stderr, "in function %s\n", __func__);
+
         int ret = network_setup();
+
+        fprintf(stderr, "Finished client network setup\n");
 
         if(ret)
         {
@@ -276,11 +301,15 @@ namespace client
         use_extended_names(TRUE);
 
         signal(SIGWINCH, resize_handler);
+        //signal(SIGINT, exit_handler);
 
         wrefresh(stdscr);
 
         int w, h;
         getmaxyx(stdscr, h, w);
+
+        //w = 80;
+        //h = 10;
 
         mainWindow = newwin(h - 1, w, 0, 0);
         commandWindow = newwin(1, w, h-1, 0);
@@ -311,11 +340,17 @@ namespace client
             print_in_cmd_window(c);
             free(c);
         }
+
+        fprintf(stderr, "Finished setting up client\n");
+
+        return 0;
     }
 
 
     int client_entrypoint()
     {
+        fprintf(stderr, "in function %s\n", __func__);
+
         sleep(1);
         int ret = setup();
 
@@ -346,10 +381,16 @@ namespace client
             int maxx, maxy;
             getmaxyx(mainWindow, maxy, maxx);
 
+            //fprintf(stderr, "reading char\n");
             in = wgetch(currWindow);
+            //fprintf(stderr, "read char: %d\n", in);
+
 
             if(in == CTRL_Q)        // exit on CTRL+Q
+            {
+                fprintf(stderr, "client got normal quit command\n");
                 break;
+            }
             else if (in == KEY_UP)
             {
                 move_win_rel(currWindow, 0, -1);

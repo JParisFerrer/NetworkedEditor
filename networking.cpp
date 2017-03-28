@@ -67,15 +67,20 @@ std::pair<char*,size_t> get_message(int sock)
         ssize_t got = recv(sock, tbuf, MTU, MSG_PEEK | flags);
 
         // only don't block the first time
+        // so that we can have fast client code but also get the whole message
         flags = 0;
 
         if(got <= 0)
         {
+            size_t r = 0;
             free(retbuf);
             free(tbuf);
-            if(get != 0 && !(errno == EAGAIN || errno == EWOULDBLOCK))
+            if(got != 0 && !(errno == EAGAIN || errno == EWOULDBLOCK))
+            {
                 perror("[get_message] recv");
-            return std::make_pair(nullptr, 0);
+                r = 1;
+            }
+            return std::make_pair(nullptr, r);
         }
 
         if(total_got == 0)
@@ -239,7 +244,7 @@ bool send_remove(int sock, size_t y, size_t x)
     return ret;
 }
 
-bool send_write(int sock, std::string filename);
+bool send_write(int sock, std::string filename)
 {
     size_t len = sizeof(short) + filename.length() + 1;
     char* buf = new char[len];

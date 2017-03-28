@@ -19,9 +19,26 @@ void parse_opts(int argc, char** argv)
     SERVER_ADDRESS = "127.0.0.1";
 }
 
+void main_int_handler(int arg)
+{
+    fprintf(stderr, "EXIT HANDLER\n");
+
+    if(START_SERVER)
+    {
+        kill(SERVER_PID, SIGTERM);
+    }
+
+    client::exit_handler(0);
+
+    // shouldn't reach here because that thing also has an exit(1)
+    exit(1);
+}
+
 int main(int argc, char** argv)
 {
     parse_opts(argc, argv);
+
+    signal(SIGPIPE, SIG_IGN);
 
     if(START_SERVER)
     {
@@ -70,6 +87,8 @@ int main(int argc, char** argv)
             SERVER_PID = child;
         }
     }
+
+    signal(SIGINT, main_int_handler);
 
     FILE* f = fopen("clogerr.txt", "w");
     if(!f)
