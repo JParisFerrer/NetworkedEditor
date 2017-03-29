@@ -18,7 +18,8 @@
 #include <string>
 #include <iostream>
 #include "networking.h"
-
+#include "textcontainer.h"
+#include "blockingVector.h"
 
 
 namespace server

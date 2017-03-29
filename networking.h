@@ -27,6 +27,7 @@ enum class PacketType : short
     Insert,
     Remove,
     GetFull,
+    FullContent,
     WriteToDisk,
     WriteConfirmed,
     ReadFromDisk,
@@ -55,6 +56,10 @@ bool send_remove(int sock, size_t y, size_t x);
 
 bool send_write(int sock, std::string filename);
 
+bool send_write_confirm(int sock, std::string filename);
+
 bool send_read(int sock, std::string filename);
+
+bool send_read_confirm(int sock, size_t lines, std::string filename);
 
 #endif

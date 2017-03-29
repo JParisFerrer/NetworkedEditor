@@ -9,6 +9,8 @@ namespace server
 
     std::vector<pthread_t> threads;
 
+    TextContainer<BlockingVector> text;
+
     void sigterm_handler(int sig)
     {
         fprintf(stderr, "Got SIGTERM\n");
@@ -48,8 +50,8 @@ namespace server
                 continue;
             }
 
-            if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1 || 
-                    setsockopt(socket_fd, IPPROTO_TCP, TCP_NODELAY, (void*)&yes, sizeof(int)) == -1
+            if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1 //|| 
+                    //setsockopt(socket_fd, IPPROTO_TCP, TCP_NODELAY, (void*)&yes, sizeof(int)) == -1
                     || setsockopt(socket_fd, SOL_SOCKET, SO_KEEPALIVE, &yes, sizeof(int)) == -1 
                 )
             {
@@ -137,31 +139,77 @@ namespace server
 
             PacketType type = get_bytes_as<PacketType>(msg.first, 0);
 
-            //fprintf(stdout, "Got message of type %d\n", type);
+            fprintf(stdout, "Got message of type %d\n", type);
 
             switch(type)
             {
                 case PacketType::Move:
+                {
                     //fprintf(stdout, "Got move!\n");
+                    size_t y, x;
+                    y = get_bytes_as<size_t>(msg.first, sizeof(short));
+                    x = get_bytes_as<size_t>(msg.first, sizeof(short) + sizeof(size_t));
+
+                    text.move(y, x);
+
                     break;
+                }
 
                 case PacketType::Insert:
+                {
                     //fprintf(stdout, "Got insert!\n");
+
+                    size_t y, x;
+                    int c;
+
+                    y = get_bytes_as<size_t>(msg.first, sizeof(short));
+                    x = get_bytes_as<size_t>(msg.first, sizeof(short) + sizeof(size_t));
+                    c = get_bytes_as<int>(msg.first, sizeof(short) + sizeof(size_t) * 2);
+
+                    text.insert(y, x, c);
+
                     break;
+                }
 
                 case PacketType::Remove:
+                {
                     //fprintf(stdout, "Got remove!\n");
+
+                    size_t y, x;
+                    y = get_bytes_as<size_t>(msg.first, sizeof(short));
+                    x = get_bytes_as<size_t>(msg.first, sizeof(short) + sizeof(size_t));
+
+                    text.remove(y, x);
+
                     break;
+                }
 
                 case PacketType::WriteToDisk:
+                {
                     // rest of bytes are a filename
+                    std::string filename(msg.first + sizeof(short), msg.second - sizeof(short));
+
+                    printf("Writing text to disk, into %s\n", filename.c_str());
+
+                    text.writeToFile(filename);
+
+                    send_write_confirm(client_fd, filename);
 
                     break;
+                }
 
                 case PacketType::ReadFromDisk:
+                {
                     // rest of bytes are a filename
 
+                    std::string filename(msg.first + sizeof(short), msg.second - sizeof(short));
+
+                    size_t lines = text.readFromFile(filename);
+
+                    send_read_confirm(client_fd, lines, filename);
+
                     break;
+                }
 
                 default:
 
@@ -195,8 +243,8 @@ namespace server
                 continue;
             }
 
-            int yes = 1;
-            if (setsockopt(client_fd, IPPROTO_TCP, TCP_NODELAY, (void*)&yes, sizeof(int)) == -1)
+            int yes = 1, no = 0;
+            if (setsockopt(client_fd, IPPROTO_TCP, TCP_NODELAY, (void*)&no, sizeof(int)) == -1)
             {
                 perror("setsockopt");
                 return 5;

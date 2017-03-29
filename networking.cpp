@@ -53,23 +53,22 @@ std::pair<bool, size_t> footer_exists(char* buf, size_t len)
 
 std::pair<char*,size_t> get_message(int sock)
 {
+    ssize_t a = recv(sock, NULL, MTU, MSG_DONTWAIT);
+
+    if(a <= 0 && (errno == EAGAIN || errno == EWOULDBLOCK))
+        return std::make_pair(nullptr, 0);
+
     // get a buffer the maximum size of a message
     char* tbuf = (char*)calloc(1, MTU + 1);
     char* retbuf = (char*)calloc(1, MTU + 1);
 
     size_t total_got = 0;
 
-    int flags = MSG_DONTWAIT;
-
     while(1)
     {
         // peek so that we can only read what we need to get the footer
-        ssize_t got = recv(sock, tbuf, MTU, MSG_PEEK | flags);
-
-        // only don't block the first time
-        // so that we can have fast client code but also get the whole message
-        flags = 0;
-
+        ssize_t got = recv(sock, tbuf, MTU, MSG_PEEK);
+        
         if(got <= 0)
         {
             size_t r = 0;
@@ -101,6 +100,7 @@ std::pair<char*,size_t> get_message(int sock)
         // scan for the footer
         ssize_t off = std::max((ssize_t)total_got - HEADER_LENGTH, 0L);
         size_t len = got + (total_got > HEADER_LENGTH ? HEADER_LENGTH : total_got);
+        // TODO: fix this line VVV
         std::pair<bool, size_t> ret = footer_exists(retbuf + off, len);
 
         if(ret.first)
@@ -135,7 +135,9 @@ std::pair<char*,size_t> get_message(int sock)
 
     free(tbuf);
 
-    return std::make_pair(retbuf, total_got);
+    fprintf(stderr, "[!] Exited loop in get_message\n");
+
+    return std::make_pair(retbuf, total_got - 2 * HEADER_LENGTH);
 }
 
 
@@ -146,6 +148,13 @@ void free_message(char* msg)
 
 bool send_message(int sock, char* buf, size_t num_bytes)
 {
+    int yes = 1, no = 0;
+
+    /*
+    setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (void*)&no, sizeof(int));
+    setsockopt(sock, IPPROTO_TCP, TCP_CORK, (void*)&yes, sizeof(int));
+    */
+
     size_t left = num_bytes;
     size_t total_sent = 0;
     int mtu = MTU;
@@ -182,6 +191,11 @@ bool send_message(int sock, char* buf, size_t num_bytes)
     }
 
     send(sock, MESSAGE_FOOTER, HEADER_LENGTH, 0);
+
+    /*
+    setsockopt(sock, IPPROTO_TCP, TCP_CORK, (void*)&no, sizeof(int));
+    setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (void*)&yes, sizeof(int));
+    */
 
     return true;
 }
@@ -260,6 +274,22 @@ bool send_write(int sock, std::string filename)
     return ret;
 }
 
+bool send_write_confirm(int sock, std::string filename)
+{
+    size_t len = sizeof(short) + filename.length() + 1;
+    char* buf = new char[len];
+
+    *(short*)buf = (short)PacketType::WriteConfirmed;
+    strncpy(buf + sizeof(short), filename.c_str(), filename.length() + 1);
+
+    bool ret = send_message(sock, buf, len);
+
+    if(!ret)
+        fprintf(stderr, "[!!!] [%s] bad return value\n", __func__);
+
+    return ret;
+}
+
 bool send_read(int sock, std::string filename)
 {
     size_t len = sizeof(short) + filename.length() + 1;
@@ -267,6 +297,23 @@ bool send_read(int sock, std::string filename)
 
     *(short*)buf = (short)PacketType::ReadFromDisk;
     strncpy(buf + sizeof(short), filename.c_str(), filename.length()+1);
+
+    bool ret = send_message(sock, buf, len);
+
+    if(!ret)
+        fprintf(stderr, "[!!!] [%s] bad return value\n", __func__);
+
+    return ret;
+}
+
+bool send_read_confirm(int sock, size_t lines, std::string filename)
+{
+    size_t len = sizeof(short) + sizeof(size_t) + filename.length() + 1;
+    char* buf = new char[len];
+
+    *(short*)buf = (short)PacketType::ReadConfirmed;
+    *(size_t*)(buf + sizeof(short)) = lines;
+    strncpy(buf + sizeof(short) + sizeof(size_t), filename.c_str(), filename.length()+1);
 
     bool ret = send_message(sock, buf, len);
 

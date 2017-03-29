@@ -224,7 +224,7 @@ namespace client
         fprintf(stderr, "in function %s\n", __func__);
 
         struct addrinfo hints, *server_info, *traverser;
-        int yes = 1;
+        int yes = 1, no = 0;
 
         memset(&hints, 0, sizeof(hints));
         hints.ai_family = AF_INET;
@@ -248,7 +248,7 @@ namespace client
                 continue;
             }
 
-            if (setsockopt(socket_fd, IPPROTO_TCP, TCP_NODELAY, (void*)&yes, sizeof(int)) == -1)
+            if (setsockopt(socket_fd, IPPROTO_TCP, TCP_NODELAY, (void*)&no, sizeof(int)) == -1)
             {
                 perror("setsockopt");
                 return 5;
@@ -353,6 +353,11 @@ namespace client
 
         sleep(1);
         int ret = setup();
+        endwin();
+
+        send_write(SERVER_SOCKET, "out.txt");
+
+        while(1);
 
         if(ret)
         {
@@ -374,6 +379,8 @@ namespace client
         //delwin(stdscr);
 
         currWindow = mainWindow;
+
+        wrefresh(currWindow);
 
         int in;     // a char, but uses higher values for special chars
         while(1)
@@ -458,6 +465,8 @@ namespace client
                                     print_in_cmd_window(c);
                                     free(c);        // I think it uses malloc
                                     */
+
+                                    fprintf(stderr, "Writing file %s\n", v[1].c_str());
 
                                     send_write(SERVER_SOCKET, v[1]);
                                 }
