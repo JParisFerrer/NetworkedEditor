@@ -353,11 +353,10 @@ namespace client
 
         sleep(1);
         int ret = setup();
-        endwin();
 
-        send_write(SERVER_SOCKET, "out.txt");
-
-        while(1);
+        //endwin();
+        //send_write(SERVER_SOCKET, "out.txt");
+        //while(1);
 
         if(ret)
         {

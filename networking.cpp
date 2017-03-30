@@ -39,24 +39,31 @@ std::pair<bool, size_t> footer_exists(char* buf, size_t len)
         {
             // not same, aka not same chain
             same = 0;
-        }
 
-        // check again, as it could be the start of a new chain
-        if(buf[i] == MESSAGE_FOOTER[0])
-        {
-            same++;
+            // check again, as it could be the start of a new chain
+            if(buf[i] == MESSAGE_FOOTER[0])
+            {
+                same++;
+            }
         }
     }
 
+    // ugh, oh well the ternary has been written
     return std::make_pair((same == HEADER_LENGTH ? true : false), i);
 }
 
 std::pair<char*,size_t> get_message(int sock)
 {
-    ssize_t a = recv(sock, NULL, MTU, MSG_DONTWAIT);
+    static char garbage[MTU];
+    ssize_t a = recv(sock, garbage, MTU, MSG_DONTWAIT | MSG_PEEK);
 
     if(a <= 0 && (errno == EAGAIN || errno == EWOULDBLOCK))
         return std::make_pair(nullptr, 0);
+    else if (a <= 0)
+    {
+        perror("get_message peek");
+        return std::make_pair(nullptr, 1);
+    }
 
     // get a buffer the maximum size of a message
     char* tbuf = (char*)calloc(1, MTU + 1);
@@ -97,6 +104,9 @@ std::pair<char*,size_t> get_message(int sock)
             }
         } 
 
+        retbuf = (char*)realloc(retbuf, total_got + got);
+        memcpy(retbuf + total_got, tbuf, got);
+
         // scan for the footer
         ssize_t off = std::max((ssize_t)total_got - HEADER_LENGTH, 0L);
         size_t len = got + (total_got > HEADER_LENGTH ? HEADER_LENGTH : total_got);
@@ -112,10 +122,10 @@ std::pair<char*,size_t> get_message(int sock)
             size_t actually_read = ret.second + HEADER_LENGTH + (total_got > HEADER_LENGTH ? HEADER_LENGTH : total_got);
 
             // now remove those bytes from the read queue, this should leave the next header right there to read
-            recv(sock, nullptr, actually_read, 0);
+            recv(sock, garbage, actually_read, 0);
 
             retbuf = (char*)realloc(retbuf, total_got + actually_read);
-            memcpy(retbuf + total_got, tbuf, actually_read);
+            //memcpy(retbuf + total_got, tbuf, actually_read);
 
             free(tbuf);
 
@@ -123,13 +133,13 @@ std::pair<char*,size_t> get_message(int sock)
         }
         // else keep going
 
-        retbuf = (char*)realloc(retbuf, total_got + got);
-        memcpy(retbuf + total_got, tbuf, got);
+        //retbuf = (char*)realloc(retbuf, total_got + got);
+        //memcpy(retbuf + total_got, tbuf, got);
 
         total_got += got;
         
         // now remove those bytes from the read queue, this should leave the next header right there to read
-        recv(sock, nullptr, got, 0);
+        recv(sock, garbage, got, 0);
 
     }
 
