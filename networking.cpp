@@ -101,6 +101,8 @@ std::pair<char*,size_t> get_message(int sock)
             {
                 // we didn't read a header
                 fprintf(stderr, "[!!!] Bad header read! Got '%s' expected '%s'\n", tbuf, t);
+
+                return std::make_pair(nullptr, 1);
             }
         } 
 
@@ -108,6 +110,8 @@ std::pair<char*,size_t> get_message(int sock)
         memcpy(retbuf + total_got, tbuf, got);
 
         // scan for the footer
+
+        // this here assumes we never read less than HEADER_LENGTH
         ssize_t off = std::max((ssize_t)total_got - HEADER_LENGTH, 0L);
         size_t len = got + (total_got > HEADER_LENGTH ? HEADER_LENGTH : total_got);
         // TODO: fix this line VVV
@@ -119,7 +123,8 @@ std::pair<char*,size_t> get_message(int sock)
             // this should probably be happening almost everytime
 
             // number from start + length of footer + length of start to new stuff
-            size_t actually_read = ret.second + HEADER_LENGTH + (total_got > HEADER_LENGTH ? HEADER_LENGTH : total_got);
+            //size_t actually_read = ret.second + HEADER_LENGTH + (total_got > HEADER_LENGTH ? HEADER_LENGTH : total_got);
+            size_t actually_read = ret.second - (total_got > HEADER_LENGTH ? 10 : 0);
 
             // now remove those bytes from the read queue, this should leave the next header right there to read
             recv(sock, garbage, actually_read, 0);

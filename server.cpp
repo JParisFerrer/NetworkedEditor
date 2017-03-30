@@ -139,7 +139,7 @@ namespace server
 
             PacketType type = get_bytes_as<PacketType>(msg.first, 0);
 
-            fprintf(stdout, "Got message of type %d\n", type);
+            //fprintf(stdout, "Got message of type %s\n", PacketTypeNames[(short)type].c_str());
 
             switch(type)
             {

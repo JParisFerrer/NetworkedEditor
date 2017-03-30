@@ -34,6 +34,20 @@ enum class PacketType : short
     ReadConfirmed
 };
 
+static std::string PacketTypeNames[] = 
+{
+    "Debug",
+    "Logging",
+    "Move",
+    "Insert",
+    "Remove",
+    "GetFull",
+    "FullContent",
+    "WriteToDisk",
+    "WriteConfirmed",
+    "ReadFromDisk",
+    "ReadConfirmed"
+};
 
 std::pair<char*,size_t> get_message(int sock);
 
