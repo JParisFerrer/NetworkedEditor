@@ -62,6 +62,8 @@ int* LockFreeList::getBuffer()
     // make atomic
     bufferPoolHead = bufferPoolHead.load()->next;
 
+    //fprintf(stderr, "Returning buffer %p\n", ret->buffer);
+
     return ret->buffer;
 }
 
@@ -107,12 +109,16 @@ else{
 
     if(lineList == nullptr)
     {
+        fprintf(stderr, "[!!] Got bad insert line index %lu in %s!\n", line, __func__);
+    }
+    if(input == ENTER_KEY)
+    {
         // we need to add that line
-        LockFreeList* last = getList(line-1);
+        LockFreeList* last = getList(line);
 
         if(last == nullptr)
         {
-            fprintf(stderr, "[!!] Got bad index %lu in %s!\n", line, __func__);
+            fprintf(stderr, "[!!] Missing line with index %lu in %s!\n", line, __func__);
             return;
         }
         // else we good to make a new one
@@ -120,7 +126,7 @@ else{
         // make atomic
         last->next = newlist;
 
-        newlist->insertInto(index, input);
+        //newlist->insertInto(index, input);
     }
     else
     {
@@ -211,7 +217,7 @@ void LockFreeList::print(size_t line,size_t maxWidth){
 
             if(data[bufindex][bufoffset] != UNUSEDINT)
             {
-                mvwaddch(mainWindow, index, printindex, data.load()[bufindex][bufoffset]);
+                mvwaddch(mainWindow, index, printindex, t->data.load()[bufindex][bufoffset]);
                 printindex++;
             }
         }
