@@ -7,13 +7,14 @@
 
 /*Constructors*/
 LockFreeList::LockFreeList() {
-    data=new int *[1];
+    data=new int *[64]();
 
     data[0] = new int[CHARBUFFER];
     for (int i = 0; i < CHARBUFFER; i++)
         data[0][i] = UNUSEDINT;
 
     dataLength = 0;
+    dataCapacity = 64;
 
     std::thread bufferFiller (bufferMaker);
 
@@ -38,10 +39,27 @@ void LockFreeList::bufferMaker() {
                 BufferList * newBuff=new BufferList();
                 //insert bufferPoolHead into newBuff.next
                 //exchange newBuff into bufferPoolHead
+
+                // make these atomic
+                newBuff->next = bufferPoolHead.load();
+                bufferPoolHead = newBuff;
             }
         }
     }
 }
+
+void LockFreeList::getBuffer()
+{
+    while(bufferPoolHead.load() == nullptr);
+
+    // make atomic
+    BufferList* ret = bufferPoolHead.load();
+    // make atomic
+    bufferPoolHead = bufferPoolHead.load()->next;
+
+    return ret->data;
+}
+
 /*swap this out later*/
 size_t bufferLength(){
     size_t len=0;
@@ -120,14 +138,30 @@ void LockFreeList::insertInto(size_t index, int c)
         return;
     }
     // theoretically could be asking for something up to 4 chars after the end of the line, but we trust editor (a bit)
-    else if (bufindex == dataLength)
+    if (bufindex == dataLength)
     {
         // need new buffer
-    }
-    else
-    {
+        if(dataLength < dataCapacity)
+        {
+            data[dataLength++] = getBuffer();
+        }
+        else
+        {
+            // make it bigger
+            int** newdata = new int*[dataCapacity * 2]();
+            for(size_t i = 0; i < dataCapacity; i++)
+                newdata[i] = data[i]; // shallow copy
+            delete [] data;     // proper code would do this after in case of errors
+            data = newdata;
 
+            // then add a buffer
+            data[dataLength++] = getBuffer();
+        }
     }
+    // now the buffer will exist and we can just write in there
+    data[bufindex][bufoffset] = c;
+
+
 }
 
 void LockFreeList::remove(size_t line, size_t index){

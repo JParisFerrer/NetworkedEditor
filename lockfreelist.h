@@ -25,8 +25,17 @@ struct BufferList {
             buffer[i] = UNUSEDINT;
     }
 
+    BufferList(int* buf)
+    {
+        next = nullptr;
+        buffer = buf;
+        for(int i = 0; i < CHARBUFFER; i++)
+            buffer[i] = UNUSEDINT;
+    }
+
     ~BufferList(){
-        delete [] buffer;
+        // jk we need this later
+        //delete [] buffer;
     }
 };
 
@@ -57,6 +66,7 @@ private:
 
     std::atomic< int ** > data;
     size_t dataLength;
+    size_t dataCapacity;
 
     //std::atomic<node<T>*> head;
     std::atomic< BufferList * > bufferPoolHead;
@@ -69,6 +79,8 @@ private:
     LockFreeList* getList(size_t line);
 
     void insertInto(size_t index, int c);
+
+    int* getBuffer();
 };
 
 #endif
