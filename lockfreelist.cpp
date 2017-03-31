@@ -21,6 +21,7 @@ LockFreeList::LockFreeList() {
     dataCapacity = 64;
 
     std::thread bufferFiller (&LockFreeList::bufferMaker, this);
+    bufferFiller.detach();
 
     next = nullptr;
 }
