@@ -55,6 +55,12 @@ void LockFreeList::bufferMaker() {
 
 int* LockFreeList::getBuffer()
 {
+    int* r = new int[CHARBUFFER];
+    for (int i = 0; i < CHARBUFFER; i++)
+        r[i] = UNUSEDINT;
+
+    return r;
+
     while(bufferPoolHead.load() == nullptr);
 
     // make atomic
