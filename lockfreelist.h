@@ -20,7 +20,9 @@ struct BufferList {
 
     BufferList(){
         next=NULL;
-        buffer=new int[CHARBUFFER](UNUSEDINT);
+        buffer=new int[CHARBUFFER];
+        for(int i = 0; i < CHARBUFFER; i++)
+            buffer[i] = UNUSEDINT;
     }
 
     ~BufferList(){
@@ -52,7 +54,9 @@ public:
   void writeToFileDebug();
 
 private:
+
     std::atomic< int ** > data;
+    size_t dataLength;
 
     //std::atomic<node<T>*> head;
     std::atomic< BufferList * > bufferPoolHead;
@@ -60,8 +64,11 @@ private:
     std:unordered_map< size_t, Location > locations;
 
     LockFreeList* next;
-};
 
-#include "lockfreelist.cpp"
+
+    LockFreeList* getList(size_t line);
+
+    void insertInto(size_t index, int c);
+};
 
 #endif

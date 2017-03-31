@@ -5,8 +5,6 @@
 #define CONDITION 1
 
 
-
-
 /*Constructors*/
 LockFreeList::LockFreeList() {
     data=new int *[1];
@@ -15,7 +13,11 @@ LockFreeList::LockFreeList() {
     for (int i = 0; i < CHARBUFFER; i++)
         data[0][i] = UNUSEDINT;
 
+    dataLength = 0;
+
     std::thread bufferFiller (bufferMaker);
+
+    next = nullptr;
 }
 
 LockFreeList::~LockFreeList() {
@@ -60,7 +62,6 @@ void LockFreeList::insert(size_t line, size_t index, int input){
     If the cas was not successful, go back to 1.
 
 
-
 //using auto is like dying inside
 
 std::vector<int>::iterator itHorz=this->data[line].begin();
@@ -79,10 +80,54 @@ else{
 }
 */
 
+    LockFreeList* lineList = getList(line);
+
+    if(lineList == nullptr)
+    {
+        // we need to add that line
+        LockFreeList* last = getList(line-1);
+
+        if(last == nullptr)
+        {
+            fprintf(stderr, "[!!] Got bad index %lu in %s!\n", line, __func__);
+            return;
+        }
+        // else we good to make a new one
+        LockFreeList* newlist = new LockFreeList();
+        // make atomic
+        last->next = newlist;
+
+        newlist->insertInto(index, input);
+    }
+    else
+    {
+        // we need to insert into the given list
+        lineList->insertInto(index, input);
+    }
 
 
+}
 
+void LockFreeList::insertInto(size_t index, int c)
+{
+    // actually perform the insertion into buffers and stuff
+    size_t bufindex = index / CHARBUFFER;
+    size_t bufoffset = index % CHARBUFFER;
 
+    if(bufindex > dataLength)
+    {
+        fprintf(stderr, "[!!] Bad index of %lu (max len: %lu) in %s\n", index, dataLength * CHARBUFFER, __func__);
+        return;
+    }
+    // theoretically could be asking for something up to 4 chars after the end of the line, but we trust editor (a bit)
+    else if (bufindex == dataLength)
+    {
+        // need new buffer
+    }
+    else
+    {
+
+    }
 }
 
 void LockFreeList::remove(size_t line, size_t index){
@@ -114,4 +159,20 @@ void LockFreeList::printDebug(){
 
 void LockFreeList::writeToFileDebug(){
 
+}
+
+LockFreeList* LockFreeList::getList(size_t line)
+{
+    LockFreeList* t = this;
+
+    while(*t)
+    {
+        if(line == 0)
+            break;
+
+        t = t->next;
+        line--;
+    }
+
+    return t;
 }
