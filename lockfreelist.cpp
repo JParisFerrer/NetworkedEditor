@@ -4,6 +4,10 @@
 #define BUFFERLEN 100
 #define CONDITION 1
 
+// the KEY_ENTER is wrong, use this constant instead
+#define ENTER_KEY 13
+
+extern WINDOW* mainWindow;
 
 /*Constructors*/
 LockFreeList::LockFreeList() {
@@ -182,6 +186,37 @@ void LockFreeList::readFromFile(std::string fileName){
 }
 
 void LockFreeList::print(size_t line,size_t maxWidth){
+
+    LockFreeList* t = this;
+
+    size_t index = line;
+    while(t != nullptr)
+    {
+        wmove(mainWindow, index, 0);
+        waddstr(mainWindow, "                                                                                                                                                 ");
+
+        size_t printindex = 0;
+        for(ssize_t i = 0; i < maxWidth; i++)
+        {
+            size_t bufindex = i / CHARBUFFER;
+            size_t bufoffset = i % CHARBUFFER;
+
+            // if too far, stop this line
+            if(bufindex >= dataLength)
+            {
+                break;
+            }
+
+            if(data[bufindex][bufoffset] != UNUSEDINT)
+            {
+                mvaddch(mainWindow, index, printindex, data[bufindex][bufoffset]);
+                printindex++;
+            }
+        }
+
+        t = t->next;
+        index++;
+    }
 
 }
 
