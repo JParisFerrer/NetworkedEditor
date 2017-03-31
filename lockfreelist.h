@@ -4,6 +4,7 @@
 
 #include <unordered_map>
 #include <thread>
+#include <atomic>
 #include <chrono>
 #include "curses.h"
 #include "string"
