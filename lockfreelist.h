@@ -5,6 +5,8 @@
 #include <unordered_map>
 #include <thread>
 #include <chrono>
+#include "curses.h"
+#include "string"
 
 #define CHARBUFFER 4
 #define UNUSEDINT 99999
@@ -50,8 +52,10 @@ public:
   void remove(size_t line, size_t index);
   void move(size_t line, size_t index);
   void writeToFile(std::string fileName);
-  void readFromFile(std::string fileName);
+  size_t readFromFile(std::string fileName);
   void print(size_t line,size_t maxWidth);
+
+  size_t line_width(size_t y);
 
   /*helpers*/
   void bufferMaker();
@@ -71,7 +75,7 @@ private:
     //std::atomic<node<T>*> head;
     std::atomic< BufferList * > bufferPoolHead;
 
-    std:unordered_map< size_t, Location > locations;
+    std::unordered_map< size_t, Location > locations;
 
     LockFreeList* next;
 

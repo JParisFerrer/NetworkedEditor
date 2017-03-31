@@ -7,6 +7,7 @@
 #include <cstdio>
 #include "textcontainer.h"
 #include "blockingVector.h"
+#include "lockfreelist.h"
 
 //using namespace std;
 
@@ -21,7 +22,7 @@ WINDOW* commandWindow;
 WINDOW* currWindow;
 
 //vector<vector< int >> data;
-TextContainer<BlockingVector> text;
+TextContainer<LockFreeList> text;
 std::vector<int> commands;
 
 ssize_t numdisplaylines = 1;

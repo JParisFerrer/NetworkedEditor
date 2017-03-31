@@ -20,7 +20,7 @@ LockFreeList::LockFreeList() {
     dataLength = 0;
     dataCapacity = 64;
 
-    std::thread bufferFiller (bufferMaker);
+    std::thread bufferFiller (&LockFreeList::bufferMaker, this);
 
     next = nullptr;
 }
@@ -52,7 +52,7 @@ void LockFreeList::bufferMaker() {
     }
 }
 
-void LockFreeList::getBuffer()
+int* LockFreeList::getBuffer()
 {
     while(bufferPoolHead.load() == nullptr);
 
@@ -61,15 +61,15 @@ void LockFreeList::getBuffer()
     // make atomic
     bufferPoolHead = bufferPoolHead.load()->next;
 
-    return ret->data;
+    return ret->buffer;
 }
 
 /*swap this out later*/
-size_t bufferLength(){
+size_t LockFreeList::bufferLength(){
     size_t len=0;
-    while(bufferPoolHead!=NULL){
+    while(bufferPoolHead.load()!=NULL){
         len++;
-        bufferPoolHead=bufferPoolHead->next;
+        bufferPoolHead=bufferPoolHead.load()->next;
     }
     return len;
 }
@@ -155,7 +155,7 @@ void LockFreeList::insertInto(size_t index, int c)
             int** newdata = new int*[dataCapacity * 2]();
             for(size_t i = 0; i < dataCapacity; i++)
                 newdata[i] = data[i]; // shallow copy
-            delete [] data;     // proper code would do this after in case of errors
+            delete [] data.load();     // proper code would do this after in case of errors
             data = newdata;
 
             // then add a buffer
@@ -181,8 +181,9 @@ void LockFreeList::writeToFile(std::string fileName){
 
 }
 
-void LockFreeList::readFromFile(std::string fileName){
+size_t LockFreeList::readFromFile(std::string fileName){
 
+    return 0;
 }
 
 void LockFreeList::print(size_t line,size_t maxWidth){
@@ -209,7 +210,7 @@ void LockFreeList::print(size_t line,size_t maxWidth){
 
             if(data[bufindex][bufoffset] != UNUSEDINT)
             {
-                mvaddch(mainWindow, index, printindex, data[bufindex][bufoffset]);
+                mvwaddch(mainWindow, index, printindex, data.load()[bufindex][bufoffset]);
                 printindex++;
             }
         }
@@ -234,7 +235,7 @@ LockFreeList* LockFreeList::getList(size_t line)
 {
     LockFreeList* t = this;
 
-    while(*t)
+    while(t)
     {
         if(line == 0)
             break;
@@ -244,4 +245,14 @@ LockFreeList* LockFreeList::getList(size_t line)
     }
 
     return t;
+}
+
+size_t LockFreeList::line_width(size_t y)
+{
+    size_t bufindex = y / CHARBUFFER;
+    size_t bufoffset = y % CHARBUFFER;
+
+    LockFreeList* list = getList(y);
+
+    return list->dataLength * CHARBUFFER;
 }
