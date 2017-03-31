@@ -1,4 +1,5 @@
 //
+#include "lockfreelist.h"
 
 #define BUFFERLEN 100
 #define CONDITION 1
@@ -8,14 +9,16 @@
 
 /*Constructors*/
 LockFreeList::LockFreeList() {
-    data=new int *();
+    data=new int *[1];
+
+    data[0] = new int[CHARBUFFER];
+    for (int i = 0; i < CHARBUFFER; i++)
+        data[0][i] = UNUSEDINT;
 
     std::thread bufferFiller (bufferMaker);
 }
 
 LockFreeList::~LockFreeList() {
-
-    for
 
 
     //send condition to kill bufferMaker

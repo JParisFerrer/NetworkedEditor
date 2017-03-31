@@ -20,7 +20,7 @@ struct BufferList {
 
     BufferList(){
         next=NULL;
-        buffer=new int[CHARBUFFER];
+        buffer=new int[CHARBUFFER](UNUSEDINT);
     }
 
     ~BufferList(){
@@ -58,6 +58,8 @@ private:
     std::atomic< BufferList * > bufferPoolHead;
 
     std:unordered_map< size_t, Location > locations;
+
+    LockFreeList* next;
 };
 
 #include "lockfreelist.cpp"
