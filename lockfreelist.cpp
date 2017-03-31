@@ -17,7 +17,7 @@ LockFreeList::LockFreeList() {
     for (int i = 0; i < CHARBUFFER; i++)
         data[0][i] = UNUSEDINT;
 
-    dataLength = 0;
+    dataLength = 1;
     dataCapacity = 64;
 
     std::thread bufferFiller (&LockFreeList::bufferMaker, this);
@@ -164,6 +164,7 @@ void LockFreeList::insertInto(size_t index, int c)
                 newdata[i] = data[i]; // shallow copy
             delete [] data.load();     // proper code would do this after in case of errors
             data = newdata;
+            dataCapacity = 2* dataCapacity;
 
             // then add a buffer
             data[dataLength++] = getBuffer();
