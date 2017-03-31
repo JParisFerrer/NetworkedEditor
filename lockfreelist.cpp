@@ -211,7 +211,7 @@ void LockFreeList::print(size_t line,size_t maxWidth){
             size_t bufoffset = i % CHARBUFFER;
 
             // if too far, stop this line
-            if(bufindex >= dataLength)
+            if(bufindex >= t->dataLength)
             {
                 break;
             }
