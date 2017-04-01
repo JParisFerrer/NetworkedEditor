@@ -159,7 +159,7 @@ std::pair<char*,size_t> get_message(int sock)
         // now remove those bytes from the read queue, this should leave the next header right there to read
         recv(sock, garbage, got, 0);
 
-        fprintf(stderr, "Reading more data\n");
+        //fprintf(stderr, "Reading more data\n");
 
     }
 
