@@ -118,7 +118,7 @@ namespace server
 
         // step 1 is to send the current text to them as data
 
-
+        std::pair<char*, size_t> prev;
         // now in the loop just handle the commands as they come in
         while(1)
         {
@@ -139,7 +139,7 @@ namespace server
 
             PacketType type = get_bytes_as<PacketType>(msg.first, 0);
 
-            //fprintf(stdout, "Got message of type %s\n", PacketTypeNames[(short)type].c_str());
+            fprintf(stdout, "Got message of type %s\n", PacketTypeNames[(short)type].c_str());
 
             switch(type)
             {
@@ -195,6 +195,8 @@ namespace server
 
                     send_write_confirm(client_fd, filename);
 
+                    exit(0);
+
                     break;
                 }
 
@@ -217,7 +219,8 @@ namespace server
                     break;
             }
 
-            free_message(msg.first);
+            prev = msg;
+            //free_message(msg.first);
         }
 
         std::cout << "Thread shutting down" << std::endl;

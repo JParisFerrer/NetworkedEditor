@@ -355,6 +355,13 @@ namespace client
         int ret = setup();
 
         //endwin();
+        ////for(int i = 0; i < 100;i ++)
+        //while(1)
+        //{
+            ////send_insert(SERVER_SOCKET, 0, 0, 'A' + i);
+            //send_insert(SERVER_SOCKET, 0, 0, 'A');
+            //usleep(1000);
+        //}
         //send_write(SERVER_SOCKET, "out.txt");
         //while(1);
 
