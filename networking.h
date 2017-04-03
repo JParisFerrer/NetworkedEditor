@@ -49,7 +49,7 @@ static std::string PacketTypeNames[] =
     "ReadConfirmed"
 };
 
-std::pair<char*,size_t> get_message(int sock);
+std::pair<char*,size_t> get_message(int sock, bool block);
 
 template <typename T>
 T get_bytes_as(char* msg, size_t start_byte)

@@ -122,7 +122,7 @@ namespace server
         // now in the loop just handle the commands as they come in
         while(1)
         {
-            std::pair<char*, size_t> msg = get_message(client_fd);
+            std::pair<char*, size_t> msg = get_message(client_fd, true);
 
             // returns non-zero in second arg if it was error, else just no data
             // annoying here but used for the client code to not block
@@ -139,7 +139,7 @@ namespace server
 
             PacketType type = get_bytes_as<PacketType>(msg.first, 0);
 
-            //fprintf(stdout, "Got message of type %s\n", PacketTypeNames[(short)type].c_str());
+            fprintf(stdout, "Got message of type %s\n", PacketTypeNames[(short)type].c_str());
 
             switch(type)
             {
@@ -220,7 +220,8 @@ namespace server
             }
 
             prev = msg;
-            //free_message(msg.first);
+            free_message(msg.first);
+            //usleep(1000 * 10);   // 1ms * 10
         }
 
         std::cout << "Thread shutting down" << std::endl;

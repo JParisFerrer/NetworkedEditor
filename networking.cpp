@@ -52,17 +52,20 @@ std::pair<bool, size_t> footer_exists(char* buf, size_t len)
     return std::make_pair((same == HEADER_LENGTH ? true : false), i);
 }
 
-std::pair<char*,size_t> get_message(int sock)
+std::pair<char*,size_t> get_message(int sock, bool block)
 {
     static char garbage[MTU];
-    ssize_t a = recv(sock, garbage, MTU, MSG_DONTWAIT | MSG_PEEK);
-
-    if(a <= 0 && (errno == EAGAIN || errno == EWOULDBLOCK))
-        return std::make_pair(nullptr, 0);
-    else if (a <= 0)
+    if(!block)
     {
-        perror("get_message peek");
-        return std::make_pair(nullptr, 1);
+        ssize_t a = recv(sock, garbage, MTU, MSG_DONTWAIT | MSG_PEEK);
+
+        if(a <= 0 && (errno == EAGAIN || errno == EWOULDBLOCK))
+            return std::make_pair(nullptr, 0);
+        else if (a <= 0)
+        {
+            perror("get_message peek");
+            return std::make_pair(nullptr, 1);
+        }
     }
 
     // get a buffer the maximum size of a message
