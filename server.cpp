@@ -195,8 +195,6 @@ namespace server
 
                     send_write_confirm(client_fd, filename);
 
-                    exit(0);
-
                     break;
                 }
 
