@@ -24,6 +24,8 @@ namespace client
     TextContainer<BlockingVector> text;
     std::vector<int> commands;
 
+    std::mutex mlock;
+
     ssize_t numdisplaylines = 1;
     ssize_t numlines = 1;
     ssize_t lineoffset = 0;
@@ -80,6 +82,8 @@ namespace client
         waddstr(commandWindow, "                                                                                                                                              ");
         // don't notify because this is command window stuff
         reset_x(currWindow, false);
+
+        wrefresh(commandWindow);
     }
 
     void print_in_cmd_window(const char* c)
@@ -346,6 +350,86 @@ namespace client
         return 0;
     }
 
+    void handleMessage(std::pair<char*, size_t> msg)
+    {
+        PacketType type = get_bytes_as<PacketType>(msg.first, 0);
+
+        fprintf(stderr, "Client got message of type %d, %s\n", (short)type, ((short)type < PacketTypeNum ? PacketTypeNames[(short)type].c_str() : ""));
+
+        switch(type)
+        {
+            case PacketType::WriteConfirmed:
+            {
+                // just a string
+                std::string filename(msg.first + sizeof(short), msg.second - sizeof(short));
+
+                char* c;
+
+                asprintf(&c, "Saved file: %s", filename.c_str());
+                print_in_cmd_window(c);
+                free(c);        // I think it uses malloc
+
+                clear_cmd_window();
+
+                break;
+            }
+
+            case PacketType::ReadConfirmed:
+            {
+                // a number of lines and then a string
+                size_t linesread = get_bytes_as<size_t>(msg.first, sizeof(short));
+
+                std::string filename(msg.first + sizeof(short) + sizeof(size_t), msg.second - sizeof(short) -sizeof(size_t));
+
+                char* c;
+
+                asprintf(&c, "Read file: %s [%lu lines]", filename.c_str(), linesread);
+                print_in_cmd_window(c);
+                free(c);        // I think it uses malloc
+
+                clear_cmd_window();
+
+                break;
+            }
+
+            case PacketType::FullContent:
+            {
+                
+
+                break;
+            }
+
+            default:
+            {
+                fprintf(stderr, "Client got unhandled message type %d = %s\n", (short)type, ((short)type < PacketTypeNum ? PacketTypeNames[(short)type].c_str() : ""));
+                break;
+            }
+        }
+    }
+
+    void handleMessages()
+    {
+        //fprintf(stderr, "GOT HERE\n");
+
+        while(1)
+        {
+            //fprintf(stderr, "Client getting message\n");
+            std::pair<char*, size_t> msg = get_message(SERVER_SOCKET, true);
+            //fprintf(stderr, "Client got message\n");
+
+            mlock.lock();
+
+            //fprintf(stderr, "Client got lock\n");
+
+            handleMessage(msg);
+
+            //fprintf(stderr, "Client got message\n");
+
+            free_message(msg.first);
+
+            mlock.unlock();
+        }
+    }
 
     int client_entrypoint()
     {
@@ -388,9 +472,13 @@ namespace client
 
         wrefresh(currWindow);
 
+        std::thread thread(handleMessages);
+
         int in;     // a char, but uses higher values for special chars
         while(1)
         {
+            //handleMessages();
+
             int maxx, maxy;
             getmaxyx(mainWindow, maxy, maxx);
 
@@ -398,10 +486,12 @@ namespace client
             in = wgetch(currWindow);
             //fprintf(stderr, "read char: %d\n", in);
 
+            mlock.lock();
 
             if(in == CTRL_Q)        // exit on CTRL+Q
             {
                 fprintf(stderr, "client got normal quit command\n");
+                mlock.unlock();
                 break;
             }
             else if (in == KEY_UP)
@@ -654,6 +744,8 @@ namespace client
 END:
 
             refresh_screen();
+
+            mlock.unlock();
         }
 
         endwin();

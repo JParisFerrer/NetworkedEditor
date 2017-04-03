@@ -309,6 +309,7 @@ bool send_write(int sock, std::string filename)
 
 bool send_write_confirm(int sock, std::string filename)
 {
+    fprintf(stderr, "%s\n", __func__);
     size_t len = sizeof(short) + filename.length() + 1;
     char* buf = new char[len];
 

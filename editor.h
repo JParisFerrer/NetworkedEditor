@@ -17,6 +17,8 @@
 #include <netinet/tcp.h>
 #include <vector>
 #include <cstdio>
+#include <mutex>
+#include <thread>
 #include "textcontainer.h"
 #include "blockingVector.h"
 #include "networking.h"

@@ -49,6 +49,8 @@ static std::string PacketTypeNames[] =
     "ReadConfirmed"
 };
 
+static size_t PacketTypeNum = 11;
+
 std::pair<char*,size_t> get_message(int sock, bool block);
 
 template <typename T>
