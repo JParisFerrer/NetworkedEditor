@@ -265,6 +265,8 @@ namespace client
                 continue;
             }
 
+            fprintf(stderr, "Connected to server at %s on port %s\n", SERVER_ADDRESS.c_str(), SERVER_PORT.c_str());
+
             // if we made it here, then we connected fine
             break;
         }
@@ -473,6 +475,7 @@ namespace client
         wrefresh(currWindow);
 
         std::thread thread(handleMessages);
+        thread.detach();
 
         int in;     // a char, but uses higher values for special chars
         while(1)
