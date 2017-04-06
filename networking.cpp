@@ -356,3 +356,20 @@ bool send_read_confirm(int sock, size_t lines, std::string filename)
 
     return ret;
 }
+
+bool send_get_full(int sock)
+{
+    size_t len = sizeof(short) + 1;
+    char* buf = new char[len];
+
+    *(short*)buf = (short)PacketType::GetFull;
+
+    bool ret = send_message(sock, buf, len);
+
+    if(!ret)
+        fprintf(stderr, "[!!!] [%s] bad return value\n", __func__);
+
+    return ret;
+
+}
+

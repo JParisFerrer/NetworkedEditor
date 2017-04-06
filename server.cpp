@@ -211,6 +211,14 @@ namespace server
                     break;
                 }
 
+                case PacketType::GetFull:
+                {
+                    // send a full to them
+                    send_full_content(client_fd, text);
+
+                    break;
+                }
+
                 default:
 
                     fprintf(stderr, "[!] Server got unhandled message type '%d'\n", type);

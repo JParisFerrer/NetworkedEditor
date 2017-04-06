@@ -128,6 +128,75 @@ void BlockingVector::print(WINDOW* win, size_t line,size_t maxWidth){
     }
 }
 
+std::pair<char*, size_t> BlockingVector::serialize()
+{
+    std::lock_guard<std::mutex> lock(vectorLock);
+
+    // serialize ourselves to a new buffer
+    // could do realloc but too lazy, so do a two pass
+
+    size_t len = 0;
+
+    for(size_t y = 0; y < data.size(); y++)
+    {
+        for(size_t x = 0; x < data[y].size(); x++)
+        {
+            len ++;
+        }
+        len ++;     // add in the newline terminator
+    }
+
+    char* ret = new char[len];
+
+    size_t i = 0;
+
+    for(size_t y = 0; y < data.size(); y++)
+    {
+        for(size_t x = 0; x < data[y].size(); x++)
+        {
+            ret[i++] = data[y][x];
+        }
+
+        ret[i++] = '\n';     // add in the newline terminator
+    }
+
+    return std::make_pair(ret, len);
+}
+
+
+void BlockingVector::deserialize(char* buf, size_t len)
+{
+    // copy into ourselves
+    std::lock_guard<std::mutex> lock(vectorLock);
+
+    std::vector<std::vector<int>> newvec;
+
+    size_t vecindex = 0;
+    size_t read = 0;
+    char* t = buf;
+
+    newvec.push_back(std::vector<int>());
+
+    while(read < len)
+    {
+        while(*t != '\n')
+        {
+            newvec[vecindex].push_back(*t);
+            read++;
+            t++;
+        }
+        vecindex++;
+        read++;
+        t++;
+        newvec.push_back(std::vector<int>());
+    }
+    // the last line we don't need, it didn't actually exist
+
+    newvec.pop_back();
+    data = std::move(newvec);
+
+}
+
 
 /*debugging utilties*/
 /* TODO ?delete?*/

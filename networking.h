@@ -11,6 +11,7 @@
 #include <arpa/inet.h>
 #include <netinet/tcp.h>
 #include <cstring>
+#include "textcontainer.h"
 
 #define MTU 1280
 
@@ -77,5 +78,28 @@ bool send_write_confirm(int sock, std::string filename);
 bool send_read(int sock, std::string filename);
 
 bool send_read_confirm(int sock, size_t lines, std::string filename);
+
+bool send_get_full(int sock);
+
+template <class T>
+bool send_full_content(int sock, TextContainer<T>& text)
+{
+    std::pair<char*, size_t> ser = text.serialize();
+
+    size_t len = sizeof(short) + ser.second + 1;
+    char* buf = new char[len];
+
+    *(short*)buf = (short)PacketType::FullContent;
+    strncpy(buf + sizeof(short), ser.first, ser.second);
+
+    bool ret = send_message(sock, buf, len);
+
+    if(!ret)
+        fprintf(stderr, "[!!!] [%s] bad return value\n", __func__);
+
+    free(ser.first);
+
+    return ret;
+}
 
 #endif

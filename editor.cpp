@@ -391,12 +391,15 @@ namespace client
 
                 clear_cmd_window();
 
+                send_get_full(SERVER_SOCKET);
+
                 break;
             }
 
             case PacketType::FullContent:
             {
-                
+                // rest of it is serialized thing
+                text.deserialize(msg.first + sizeof(short), msg.second - sizeof(short));
 
                 break;
             }
@@ -432,6 +435,15 @@ namespace client
             mlock.unlock();
         }
     }
+    
+    void getFullLoop()
+    {
+        while(1)
+        {
+            sleep(1);
+            send_get_full(SERVER_SOCKET);
+        }
+    }
 
     int client_entrypoint()
     {
@@ -440,7 +452,7 @@ namespace client
         sleep(1);
         int ret = setup();
 
-        //endwin();
+        endwin();
         ////for(int i = 0; i < 100;i ++)
         //while(1)
         //{
@@ -476,6 +488,9 @@ namespace client
 
         std::thread thread(handleMessages);
         thread.detach();
+
+        std::thread thread2(getFullLoop);
+        thread2.detach();
 
         int in;     // a char, but uses higher values for special chars
         while(1)
