@@ -1,7 +1,7 @@
 //using namespace std;
 #include "editor.h"
 
-extern std::string SERVER_PORT;
+extern std::string SERVER_SEARCH_PORT;
 extern std::string SERVER_ADDRESS;
 
 namespace client
@@ -234,7 +234,7 @@ namespace client
         hints.ai_family = AF_INET;
         hints.ai_socktype = SOCK_STREAM;
 
-        int ret = getaddrinfo(SERVER_ADDRESS.c_str(), SERVER_PORT.c_str(), &hints, &server_info);
+        int ret = getaddrinfo(SERVER_ADDRESS.c_str(), SERVER_SEARCH_PORT.c_str(), &hints, &server_info);
         if(ret)
         {
             // would use cerr but formatting is nice
@@ -265,7 +265,7 @@ namespace client
                 continue;
             }
 
-            fprintf(stderr, "Connected to server at %s on port %s\n", SERVER_ADDRESS.c_str(), SERVER_PORT.c_str());
+            fprintf(stderr, "Connected to server at %s on port %s\n", SERVER_ADDRESS.c_str(), SERVER_SEARCH_PORT.c_str());
 
             // if we made it here, then we connected fine
             break;
@@ -273,7 +273,7 @@ namespace client
 
         if (traverser == nullptr)
         {
-            fprintf(stderr, "Failed to connect to '%s' using port '%s'", SERVER_ADDRESS.c_str(), SERVER_PORT.c_str());
+            fprintf(stderr, "Failed to connect to '%s' using port '%s'", SERVER_ADDRESS.c_str(), SERVER_SEARCH_PORT.c_str());
             return 2;
         }
 

@@ -9,16 +9,98 @@
 bool START_SERVER = false;
 std::string SERVER_ADDRESS = "127.0.0.1";
 std::string SERVER_PORT = "29629";
+std::string SERVER_SEARCH_PORT = "29629";
 
 pid_t SERVER_PID;
 
 
+/*
 
+    Acceptable options:
+        -a          address to connect to: string
+        -sp          port to connect to: string
+        -p         port to start server on: string
+        --server    start the server, even if the -a flag exists
+
+    if -a is set, don't start a server, unless --server is also specified
+
+*/
 void parse_opts(int argc, char** argv)
 {
-    START_SERVER = true;
-    SERVER_PORT = "29629";
-    SERVER_ADDRESS = "127.0.0.1";
+    std::vector<std::string> args;
+
+    char** t = argv + 1;
+
+    while(*t)
+    {
+        args.push_back(std::string(*t));
+        t++;
+    }
+
+    if(args.empty())
+    {
+        START_SERVER = true;
+        SERVER_PORT = "29629";
+        SERVER_SEARCH_PORT = "29629";
+        SERVER_ADDRESS = "127.0.0.1";
+    }
+
+    else
+    {
+        if(std::find(args.begin(), args.end(), "-p") != args.end())
+        {
+            auto it = (std::find(args.begin(), args.end(), "-p") + 1);
+            if(it == args.end() || it->find("-") != std::string::npos)
+                goto USAGE;
+            SERVER_PORT = *it;
+        }
+        if(std::find(args.begin(), args.end(), "-sp") != args.end())
+        {
+            auto it = (std::find(args.begin(), args.end(), "-sp") + 1);
+            if(it == args.end() || it->find("-") != std::string::npos)
+                goto USAGE;
+
+            SERVER_SEARCH_PORT = *it;
+        }
+
+        if(std::find(args.begin(), args.end(), "-a") != args.end())
+        {
+            // -a exists
+            auto it = (std::find(args.begin(), args.end(), "-a") + 1);
+            if(it == args.end() || it->find("-") != std::string::npos)
+                goto USAGE;
+            SERVER_ADDRESS = *it;
+
+            if(std::find(args.begin(), args.end(),"--start") != args.end())
+                START_SERVER = true;
+            else
+                START_SERVER = false;
+        }
+        else
+        {
+            // -a doesn't exist
+            START_SERVER = true;
+        }
+    }
+
+    fprintf(stdout, "Starting server: %s\n", std::to_string(START_SERVER).c_str());
+
+    if(START_SERVER)
+        fprintf(stdout, "Server port: %s\n", SERVER_PORT.c_str());
+
+    fprintf(stdout, "Server search address: %s\n", SERVER_ADDRESS.c_str());
+    fprintf(stdout, "Server search port: %s\n", SERVER_SEARCH_PORT.c_str());
+
+    return;
+
+USAGE:
+    fprintf(stderr, "Usage: %s [-p PORT] [-a ADDRESS] [-sp SEARCH_PORT] [--start]\n", argv[0]);
+    fprintf(stderr, "\n\tADDRESS: a string that is the address to attempt to connect to\n");
+    fprintf(stderr, "\tPORT: a string that is the port to start the server on\n");
+    fprintf(stderr, "\tSEARCH_PORT: a string that is the port to attempt to connect to\n");
+    fprintf(stderr, "\t--start: whether to start the server when the -a flag is set\n");
+
+    exit(1);
 }
 
 void main_int_handler(int arg)
@@ -39,7 +121,7 @@ void main_int_handler(int arg)
 int main(int argc, char** argv)
 {
     parse_opts(argc, argv);
-
+    
     signal(SIGPIPE, SIG_IGN);
 
     if(START_SERVER)
