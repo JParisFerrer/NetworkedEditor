@@ -422,17 +422,21 @@ namespace client
             std::pair<char*, size_t> msg = get_message(SERVER_SOCKET, true);
             //fprintf(stderr, "Client got message\n");
 
-            mlock.lock();
+            if(msg.first)
+            {
 
-            //fprintf(stderr, "Client got lock\n");
+                mlock.lock();
 
-            handleMessage(msg);
+                //fprintf(stderr, "Client got lock\n");
 
-            //fprintf(stderr, "Client got message\n");
+                handleMessage(msg);
 
-            free_message(msg.first);
+                //fprintf(stderr, "Client got message\n");
 
-            mlock.unlock();
+                free_message(msg.first);
+
+                mlock.unlock();
+            }
         }
     }
     

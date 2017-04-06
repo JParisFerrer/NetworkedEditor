@@ -59,7 +59,7 @@ std::pair<char*,size_t> get_message(int sock, bool block)
     {
         ssize_t a = recv(sock, garbage, MTU, MSG_DONTWAIT | MSG_PEEK);
 
-        if(a <= 0 && (errno == EAGAIN || errno == EWOULDBLOCK))
+        if(a <= 0 && (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR))
             return std::make_pair(nullptr, 0);
         else if (a <= 0)
         {
@@ -81,10 +81,13 @@ std::pair<char*,size_t> get_message(int sock, bool block)
         
         if(got <= 0)
         {
+            if(errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)
+                continue;
+
             size_t r = 0;
             free(retbuf);
             free(tbuf);
-            if(got != 0 && !(errno == EAGAIN || errno == EWOULDBLOCK))
+            if(got != 0)
             {
                 perror("[get_message] recv");
                 r = 1;
@@ -210,6 +213,8 @@ bool send_message(int sock, char* buf, size_t num_bytes)
             {
                 mtu = (int)(mtu*0.9);
             }
+            else if (errno == EAGAIN || errno == EINTR)
+                continue;
             else 
             {
                 perror("[send_message] send");
