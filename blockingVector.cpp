@@ -135,7 +135,8 @@ std::pair<char*, size_t> BlockingVector::serialize()
     // serialize ourselves to a new buffer
     // could do realloc but too lazy, so do a two pass
 
-    size_t len = 0;
+    // add 12 bytes (3 ints) at the beginning, for reasons
+    size_t len = 3;
 
     for(size_t y = 0; y < data.size(); y++)
     {
@@ -146,26 +147,34 @@ std::pair<char*, size_t> BlockingVector::serialize()
         len ++;     // add in the newline terminator
     }
 
-    char* ret = new char[len];
+    int* ret = new int[len];
 
-    size_t i = 0;
+    // start at 4th int
+    size_t i = 3;
 
     for(size_t y = 0; y < data.size(); y++)
     {
         for(size_t x = 0; x < data[y].size(); x++)
         {
-            ret[i++] = data[y][x];
+            ret[i++] = htonl(data[y][x]);
         }
 
-        ret[i++] = '\n';     // add in the newline terminator
+        ret[i++] = htonl((int)'\n');     // add in the newline terminator
     }
 
-    return std::make_pair(ret, len);
+    return std::make_pair((char*)ret, (len)*4);
 }
 
 
-void BlockingVector::deserialize(char* buf, size_t len)
+size_t BlockingVector::deserialize(char* ibuf, size_t len)
 {
+    // get a reasonable int array back
+    // also skip first 12 bytes (3 ints) for reasons
+    int* buf = (int*)(ibuf + 12);
+    len /= 4;
+    len -= 3;
+
+
     // copy into ourselves
     std::lock_guard<std::mutex> lock(vectorLock);
 
@@ -173,15 +182,16 @@ void BlockingVector::deserialize(char* buf, size_t len)
 
     size_t vecindex = 0;
     size_t read = 0;
-    char* t = buf;
+    // throw away first 10 bytes, for reasons
+    int* t = buf;
 
     newvec.push_back(std::vector<int>());
 
     while(read < len)
     {
-        while(*t != '\n')
+        while(ntohl(*t) != '\n')
         {
-            newvec[vecindex].push_back(*t);
+            newvec[vecindex].push_back(ntohl(*t));
             read++;
             t++;
         }
@@ -195,6 +205,7 @@ void BlockingVector::deserialize(char* buf, size_t len)
     newvec.pop_back();
     data = std::move(newvec);
 
+    return data.size();
 }
 
 

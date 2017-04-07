@@ -100,7 +100,7 @@ namespace server
 
         // other stuff
 
-        signal(SIGTERM, sigterm_handler);
+        //signal(SIGTERM, sigterm_handler);
         //signal(SIGINT, SIG_IGN);
         signal(SIGINT, sigterm_handler);
 
@@ -187,7 +187,7 @@ namespace server
                 case PacketType::WriteToDisk:
                 {
                     // rest of bytes are a filename
-                    std::string filename(msg.first + sizeof(short), msg.second - sizeof(short));
+                    std::string filename(msg.first + sizeof(short));
 
                     printf("Writing text to disk, into %s\n", filename.c_str());
 
@@ -202,7 +202,7 @@ namespace server
                 {
                     // rest of bytes are a filename
 
-                    std::string filename(msg.first + sizeof(short), msg.second - sizeof(short));
+                    std::string filename(msg.first + sizeof(short));
 
                     size_t lines = text.readFromFile(filename);
 
@@ -214,6 +214,7 @@ namespace server
                 case PacketType::GetFull:
                 {
                     // send a full to them
+                    fprintf(stderr, "got full request\n");
                     send_full_content(client_fd, text);
 
                     break;
@@ -237,7 +238,10 @@ namespace server
 
     int server_entrypoint()
     {
-        setup();
+        int ret = setup();
+
+        if(ret)
+            return ret;
 
         struct sockaddr_storage client_addr;
         socklen_t client_addr_size;

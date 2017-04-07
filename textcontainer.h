@@ -24,7 +24,7 @@ class TextContainer {
         void print(WINDOW* win, size_t line,size_t maxWidth);
 
         std::pair<char*, size_t> serialize();
-        void deserialize(char* buf, size_t len);
+        size_t deserialize(char* buf, size_t len);
 
         /*debugging utilties*/
 

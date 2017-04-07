@@ -49,9 +49,9 @@ std::pair<char*, size_t> TextContainer<T>::serialize()
 }
 
 template <typename T>
-void TextContainer<T>::deserialize(char* buf, size_t len)
+size_t TextContainer<T>::deserialize(char* buf, size_t len)
 {
-    this->container.deserialize(buf, len);
+    return this->container.deserialize(buf, len);
 }
 
 /*debugging utilties*/

@@ -2,12 +2,15 @@
 #ifndef _BLOCKINGVECTOR_H_
 #define _BLOCKINGVECTOR_H_
 
-
 #include <curses.h>
 #include <vector>
 #include <fstream>
 #include <iostream>
 #include <mutex>
+#include "networking.h"
+
+
+
 class BlockingVector {
     public:
         /*Constructors*/
@@ -24,7 +27,7 @@ class BlockingVector {
         void print(WINDOW* win, size_t line,size_t maxWidth);
 
         std::pair<char*, size_t> serialize();
-        void deserialize(char* buf, size_t len);
+        size_t deserialize(char* buf, size_t len);
 
         /*debugging utilties*/
         void printDebug();

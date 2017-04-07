@@ -1,5 +1,47 @@
 #include "networking.h"
 
+std::mutex sendlock;
+
+//https://stackoverflow.com/questions/3022552/is-there-any-standard-htonl-like-function-for-64-bits-integers-in-c
+uint64_t htonll(uint64_t value)
+{
+    // The answer is 42
+    static const int num = 42;
+
+    // Check the endianness
+    if (*reinterpret_cast<const char*>(&num) == num)
+    {
+        const uint32_t high_part = htonl(static_cast<uint32_t>(value >> 32));
+        const uint32_t low_part = htonl(static_cast<uint32_t>(value & 0xFFFFFFFFLL));
+
+        return (static_cast<uint64_t>(low_part) << 32) | high_part;
+    } else
+    {
+        return value;
+    }
+}
+
+uint64_t ntohll(uint64_t value)
+{
+    // The answer is 42
+    static const int num = 42;
+
+    // Check the endianness
+    if (*reinterpret_cast<const char*>(&num) == num)
+    {
+        // if we are little, we need to swap
+        const uint32_t high_part = ntohl(static_cast<uint32_t>(value >> 32));
+        const uint32_t low_part = ntohl(static_cast<uint32_t>(value & 0xFFFFFFFFLL));
+
+        return (static_cast<uint64_t>(low_part) << 32) | high_part;
+    } 
+    else
+    {
+        // if we are big, no need
+        return value;
+    }
+}
+
 // will perform one pass and see if the footer could exist in this part of the buffer or later
 bool footer_could_exist(char* buf)
 {
@@ -54,6 +96,7 @@ std::pair<bool, size_t> footer_exists(char* buf, size_t len)
 
 std::pair<char*,size_t> get_message(int sock, bool block)
 {
+
     static char garbage[MTU];
     if(!block)
     {
@@ -78,11 +121,27 @@ std::pair<char*,size_t> get_message(int sock, bool block)
     {
         // peek so that we can only read what we need to get the footer
         ssize_t got = recv(sock, tbuf, MTU, MSG_PEEK);
+
+        fprintf(stderr, "got: %ld\n", got);
+
+        if(got == 0)
+        {
+            // they shutdown
+            free(retbuf);
+            free(tbuf);
+
+            return std::make_pair(nullptr, 0);
+        }
         
-        if(got <= 0)
+        if(got < 0)
         {
             if(errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)
+            {
+                char e[1024];
+                strerror_r(errno, e, 1024);
+                fprintf(stderr, "[%s] Retrying recv: %s\n", __func__, e);
                 continue;
+            }
 
             size_t r = 0;
             free(retbuf);
@@ -97,7 +156,9 @@ std::pair<char*,size_t> get_message(int sock, bool block)
 
         if(got < 10 )
         {
-            fprintf(stderr, "[!] Got short message!!!\n");
+            fprintf(stderr, "[!] Got short message!!! %ld (%lu)\n", got, total_got);
+            usleep(1000);
+            continue;
         }
 
         if(total_got == 0)
@@ -105,7 +166,7 @@ std::pair<char*,size_t> get_message(int sock, bool block)
             // verify we are getting a message header
 
             static char t[HEADER_LENGTH + 1];
-            strncpy(t, MESSAGE_HEADER, HEADER_LENGTH);
+            memcpy(t, MESSAGE_HEADER, HEADER_LENGTH);
             t[HEADER_LENGTH] = 0;
 
             if(strncmp(t, tbuf, HEADER_LENGTH) != 0)
@@ -184,6 +245,8 @@ void free_message(char* msg)
 
 bool send_message(int sock, char* buf, size_t num_bytes)
 {
+    std::lock_guard<std::mutex> m(sendlock);
+
     int yes = 1, no = 0;
 
     /*
@@ -205,6 +268,7 @@ bool send_message(int sock, char* buf, size_t num_bytes)
         flags = 0;
         ssize_t sent = send(sock, buf + total_sent, std::min(left, (size_t)mtu), flags);
 
+
         if(sent == -1)
         {
             //errors
@@ -223,6 +287,10 @@ bool send_message(int sock, char* buf, size_t num_bytes)
         }
         else
         {
+            if(sent < 10)
+            {
+                fprintf(stderr, "[!] Sent short message!\n");
+            }
             total_sent += sent;
             left -= sent;
         }
@@ -243,9 +311,9 @@ bool send_move(int sock, size_t y, size_t x)
     size_t len = sizeof(short) + 2 * sizeof(size_t);
     char* buf = new char[len];
 
-    *(short*)buf = (short)PacketType::Move;
-    *(size_t*)(buf + sizeof(short)) = y;
-    *(size_t*)(buf + sizeof(short) + sizeof(size_t)) = x;
+    *(short*)buf = htons((short)PacketType::Move);
+    *(size_t*)(buf + sizeof(short)) = htonll(y);
+    *(size_t*)(buf + sizeof(short) + sizeof(size_t)) = htonll(x);
 
     bool ret = send_message(sock, buf, len);
 
@@ -261,10 +329,10 @@ bool send_insert(int sock, size_t y, size_t x, int c)
     size_t len = sizeof(short) + sizeof(int) + 2 * sizeof(size_t);
     char* buf = new char[len];
 
-    *(short*)buf = (short)PacketType::Insert;
-    *(size_t*)(buf + sizeof(short)) = y;
-    *(size_t*)(buf + sizeof(short) + sizeof(size_t)) = x;
-    *(int*)(buf + sizeof(short) + 2*sizeof(size_t)) = c;
+    *(short*)buf = htons((short)PacketType::Insert);
+    *(size_t*)(buf + sizeof(short)) = htonll(y);
+    *(size_t*)(buf + sizeof(short) + sizeof(size_t)) = htonll(x);
+    *(int*)(buf + sizeof(short) + 2*sizeof(size_t)) = htonl(c);
 
     bool ret = send_message(sock, buf, len);
 
@@ -282,9 +350,9 @@ bool send_remove(int sock, size_t y, size_t x)
     size_t len = sizeof(short) + 2 * sizeof(size_t);
     char* buf = new char[len];
 
-    *(short*)buf = (short)PacketType::Remove;
-    *(size_t*)(buf + sizeof(short)) = y;
-    *(size_t*)(buf + sizeof(short) + sizeof(size_t)) = x;
+    *(short*)buf = htons((short)PacketType::Remove);
+    *(size_t*)(buf + sizeof(short)) = htonll(y);
+    *(size_t*)(buf + sizeof(short) + sizeof(size_t)) = htonll(x);
 
     bool ret = send_message(sock, buf, len);
 
@@ -299,10 +367,11 @@ bool send_remove(int sock, size_t y, size_t x)
 bool send_write(int sock, std::string filename)
 {
     size_t len = sizeof(short) + filename.length() + 1;
+    len = std::max((size_t)10, len);// for reasons, make this at least 10
     char* buf = new char[len];
 
-    *(short*)buf = (short)PacketType::WriteToDisk;
-    strncpy(buf + sizeof(short), filename.c_str(), filename.length() + 1);
+    *(short*)buf = htons((short)PacketType::WriteToDisk);
+    memcpy(buf + sizeof(short), filename.c_str(), filename.length() + 1);
 
     bool ret = send_message(sock, buf, len);
 
@@ -316,10 +385,11 @@ bool send_write_confirm(int sock, std::string filename)
 {
     fprintf(stderr, "%s\n", __func__);
     size_t len = sizeof(short) + filename.length() + 1;
+    len = std::max((size_t)10, len);// for reasons, make this at least 10
     char* buf = new char[len];
 
-    *(short*)buf = (short)PacketType::WriteConfirmed;
-    strncpy(buf + sizeof(short), filename.c_str(), filename.length() + 1);
+    *(short*)buf = htons((short)PacketType::WriteConfirmed);
+    memcpy(buf + sizeof(short), filename.c_str(), filename.length() + 1);
 
     bool ret = send_message(sock, buf, len);
 
@@ -332,10 +402,11 @@ bool send_write_confirm(int sock, std::string filename)
 bool send_read(int sock, std::string filename)
 {
     size_t len = sizeof(short) + filename.length() + 1;
+    len = std::max((size_t)10, len);// for reasons, make this at least 10
     char* buf = new char[len];
 
-    *(short*)buf = (short)PacketType::ReadFromDisk;
-    strncpy(buf + sizeof(short), filename.c_str(), filename.length()+1);
+    *(short*)buf = htons((short)PacketType::ReadFromDisk);
+    memcpy(buf + sizeof(short), filename.c_str(), filename.length()+1);
 
     bool ret = send_message(sock, buf, len);
 
@@ -348,11 +419,12 @@ bool send_read(int sock, std::string filename)
 bool send_read_confirm(int sock, size_t lines, std::string filename)
 {
     size_t len = sizeof(short) + sizeof(size_t) + filename.length() + 1;
+    len = std::max((size_t)10, len);// for reasons, make this at least 10
     char* buf = new char[len];
 
-    *(short*)buf = (short)PacketType::ReadConfirmed;
-    *(size_t*)(buf + sizeof(short)) = lines;
-    strncpy(buf + sizeof(short) + sizeof(size_t), filename.c_str(), filename.length()+1);
+    *(short*)buf = htons((short)PacketType::ReadConfirmed);
+    *(size_t*)(buf + sizeof(short)) = htonll(lines);
+    memcpy(buf + sizeof(short) + sizeof(size_t), filename.c_str(), filename.length()+1);
 
     bool ret = send_message(sock, buf, len);
 
@@ -364,10 +436,12 @@ bool send_read_confirm(int sock, size_t lines, std::string filename)
 
 bool send_get_full(int sock)
 {
-    size_t len = sizeof(short) + 1;
+    
+    size_t len = sizeof(short);
+    len = std::max((size_t)10, len);// for reasons, make this at least 10
     char* buf = new char[len];
 
-    *(short*)buf = (short)PacketType::GetFull;
+    *(short*)buf = htons((short)PacketType::GetFull);
 
     bool ret = send_message(sock, buf, len);
 

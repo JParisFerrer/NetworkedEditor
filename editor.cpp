@@ -363,7 +363,7 @@ namespace client
             case PacketType::WriteConfirmed:
             {
                 // just a string
-                std::string filename(msg.first + sizeof(short), msg.second - sizeof(short));
+                std::string filename(msg.first + sizeof(short));
 
                 char* c;
 
@@ -381,7 +381,7 @@ namespace client
                 // a number of lines and then a string
                 size_t linesread = get_bytes_as<size_t>(msg.first, sizeof(short));
 
-                std::string filename(msg.first + sizeof(short) + sizeof(size_t), msg.second - sizeof(short) -sizeof(size_t));
+                std::string filename(msg.first + sizeof(short) + sizeof(size_t));
 
                 char* c;
 
@@ -399,7 +399,19 @@ namespace client
             case PacketType::FullContent:
             {
                 // rest of it is serialized thing
-                text.deserialize(msg.first + sizeof(short), msg.second - sizeof(short));
+                size_t lines = text.deserialize(msg.first + sizeof(short), msg.second - sizeof(short));
+
+                numlines = lines;
+
+                int y, x;
+                getmaxyx(mainWindow, y, x);
+
+                if(numlines > y)
+                    numdisplaylines = y;
+                else
+                    numdisplaylines = numlines;
+
+                wrefresh(mainWindow);
 
                 break;
             }
@@ -456,7 +468,7 @@ namespace client
         sleep(1);
         int ret = setup();
 
-        endwin();
+        //endwin();
         ////for(int i = 0; i < 100;i ++)
         //while(1)
         //{
@@ -495,6 +507,8 @@ namespace client
 
         std::thread thread2(getFullLoop);
         thread2.detach();
+
+        //while(1);
 
         int in;     // a char, but uses higher values for special chars
         while(1)

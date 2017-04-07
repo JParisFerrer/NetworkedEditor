@@ -11,12 +11,15 @@
 #include <arpa/inet.h>
 #include <netinet/tcp.h>
 #include <cstring>
+#include <mutex>
+#include <unistd.h>
 #include "textcontainer.h"
+
 
 #define MTU 1280
 
-const char MESSAGE_HEADER[] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
-const char MESSAGE_FOOTER[] = { 4, 4, 4, 4, 4, 4, 4, 4, 4, 4 };
+const char MESSAGE_HEADER[] = { 0, 1, 1, 1, 1, 1, 1, 1, 1, 0 };
+const char MESSAGE_FOOTER[] = { 0, 4, 4, 4, 4, 4, 4, 4, 4, 0 };
 const int HEADER_LENGTH = 10;
 
 // this is a short, 65536 message types should be enough
@@ -52,12 +55,37 @@ static std::string PacketTypeNames[] =
 
 static size_t PacketTypeNum = 11;
 
+
+uint64_t htonll(uint64_t value);
+
+uint64_t ntohll(uint64_t value);
+
 std::pair<char*,size_t> get_message(int sock, bool block);
 
 template <typename T>
 T get_bytes_as(char* msg, size_t start_byte)
 {
-    return *(T*)(msg + start_byte);
+    T ret = *(T*)(msg + start_byte);
+
+
+    if(sizeof(T) == 2)
+    {
+        //fprintf(stderr, "[%s] sizeof 2B\n", __func__);
+        return (T)ntohs((uint16_t)ret);
+    }
+    if(sizeof(T) == 4)
+    {
+        //fprintf(stderr, "[%s] sizeof 4B\n", __func__);
+        return (T)ntohl((uint32_t)ret);
+    }
+    if(sizeof(T) == 8)
+    {
+        //fprintf(stderr, "[%s] sizeof 8B\n", __func__);
+        return (T)ntohll((uint64_t)ret);
+    }
+
+    //fprintf(stderr, "[%s] sizeof %luB\n", __func__, sizeof(T));
+    return ret;
 }
 
 void free_message(char* msg);
@@ -86,11 +114,11 @@ bool send_full_content(int sock, TextContainer<T>& text)
 {
     std::pair<char*, size_t> ser = text.serialize();
 
-    size_t len = sizeof(short) + ser.second + 1;
+    size_t len = sizeof(short) + ser.second;
     char* buf = new char[len];
 
-    *(short*)buf = (short)PacketType::FullContent;
-    strncpy(buf + sizeof(short), ser.first, ser.second);
+    *(short*)buf = htons((short)PacketType::FullContent);
+    memcpy(buf + sizeof(short), ser.first, ser.second);
 
     bool ret = send_message(sock, buf, len);
 
