@@ -122,7 +122,7 @@ std::pair<char*,size_t> get_message(int sock, bool block)
         // peek so that we can only read what we need to get the footer
         ssize_t got = recv(sock, tbuf, MTU, MSG_PEEK);
 
-        fprintf(stderr, "got: %ld\n", got);
+        //fprintf(stderr, "got: %ld\n", got);
 
         if(got == 0)
         {
@@ -130,7 +130,7 @@ std::pair<char*,size_t> get_message(int sock, bool block)
             free(retbuf);
             free(tbuf);
 
-            return std::make_pair(nullptr, 0);
+            return std::make_pair(nullptr, -1);
         }
         
         if(got < 0)
@@ -321,6 +321,8 @@ bool send_move(int sock, size_t y, size_t x)
     {
         fprintf(stderr, "[!!!] [%s] Bad return value\n", __func__);
     }
+
+    delete [] buf;
 }
 
 
@@ -340,6 +342,8 @@ bool send_insert(int sock, size_t y, size_t x, int c)
     {
         fprintf(stderr, "[!!!] [%s] Bad return value\n", __func__);
     }
+
+    delete [] buf;
 
     return ret;
 }
@@ -361,6 +365,8 @@ bool send_remove(int sock, size_t y, size_t x)
         fprintf(stderr, "[!!!] [%s] Bad return value\n", __func__);
     }
 
+    delete [] buf;
+
     return ret;
 }
 
@@ -377,6 +383,8 @@ bool send_write(int sock, std::string filename)
 
     if(!ret)
         fprintf(stderr, "[!!!] [%s] bad return value\n", __func__);
+
+    delete [] buf;
 
     return ret;
 }
@@ -396,6 +404,8 @@ bool send_write_confirm(int sock, std::string filename)
     if(!ret)
         fprintf(stderr, "[!!!] [%s] bad return value\n", __func__);
 
+    delete [] buf;
+
     return ret;
 }
 
@@ -412,6 +422,8 @@ bool send_read(int sock, std::string filename)
 
     if(!ret)
         fprintf(stderr, "[!!!] [%s] bad return value\n", __func__);
+
+    delete [] buf;
 
     return ret;
 }
@@ -431,7 +443,32 @@ bool send_read_confirm(int sock, size_t lines, std::string filename)
     if(!ret)
         fprintf(stderr, "[!!!] [%s] bad return value\n", __func__);
 
+    delete [] buf;
+
     return ret;
+}
+
+bool broadcast_read_confirm(const std::vector<int> & sockets, size_t lines, std::string filename)
+{
+    size_t len = sizeof(short) + sizeof(size_t) + filename.length() + 1;
+    len = std::max((size_t)10, len);// for reasons, make this at least 10
+    char* buf = new char[len];
+
+    *(short*)buf = htons((short)PacketType::ReadConfirmed);
+    *(size_t*)(buf + sizeof(short)) = htonll(lines);
+    memcpy(buf + sizeof(short) + sizeof(size_t), filename.c_str(), filename.length()+1);
+
+    for(int sock : sockets)
+    {
+        bool ret = send_message(sock, buf, len);
+
+        if(!ret)
+            fprintf(stderr, "[!!!] [%s] bad return value for client with sock %d\n", __func__, sock);
+    }
+
+    delete [] buf;
+
+    return true;
 }
 
 bool send_get_full(int sock)
@@ -447,6 +484,8 @@ bool send_get_full(int sock)
 
     if(!ret)
         fprintf(stderr, "[!!!] [%s] bad return value\n", __func__);
+
+    delete [] buf;
 
     return ret;
 

@@ -3,6 +3,7 @@
 
 extern std::string SERVER_SEARCH_PORT;
 extern std::string SERVER_ADDRESS;
+extern bool START_SERVER;
 
 namespace client
 {
@@ -301,6 +302,7 @@ namespace client
         initscr();      // Init the library
         //cbreak();       // set it up so we read a character at a time
         raw();          // set it up so we read a character at a time
+        halfdelay(1);   // get right away, but leave function every 1/10th of a second
         nonl();
         noecho();       // prevent the screen from showing typed in characters
 
@@ -356,7 +358,7 @@ namespace client
     {
         PacketType type = get_bytes_as<PacketType>(msg.first, 0);
 
-        fprintf(stderr, "Client got message of type %d, %s\n", (short)type, ((short)type < PacketTypeNum ? PacketTypeNames[(short)type].c_str() : ""));
+        //fprintf(stderr, "Client got message of type %d, %s\n", (short)type, ((short)type < PacketTypeNum ? PacketTypeNames[(short)type].c_str() : ""));
 
         switch(type)
         {
@@ -391,7 +393,7 @@ namespace client
 
                 clear_cmd_window();
 
-                send_get_full(SERVER_SOCKET);
+                //send_get_full(SERVER_SOCKET);
 
                 break;
             }
@@ -411,7 +413,36 @@ namespace client
                 else
                     numdisplaylines = numlines;
 
-                wrefresh(mainWindow);
+                //wrefresh(mainWindow);
+
+                break;
+            }
+
+            case PacketType::Insert:
+            {
+                //fprintf(stdout, "Got insert!\n");
+
+                size_t y, x;
+                int c;
+
+                y = get_bytes_as<size_t>(msg.first, sizeof(short));
+                x = get_bytes_as<size_t>(msg.first, sizeof(short) + sizeof(size_t));
+                c = get_bytes_as<int>(msg.first, sizeof(short) + sizeof(size_t) * 2);
+
+                text.insert(y, x, c);
+
+                break;
+            }
+
+            case PacketType::Remove:
+            {
+                //fprintf(stdout, "Got remove!\n");
+
+                size_t y, x;
+                y = get_bytes_as<size_t>(msg.first, sizeof(short));
+                x = get_bytes_as<size_t>(msg.first, sizeof(short) + sizeof(size_t));
+
+                text.remove(y, x);
 
                 break;
             }
@@ -451,7 +482,7 @@ namespace client
             }
         }
     }
-    
+
     void getFullLoop()
     {
         while(1)
@@ -472,9 +503,9 @@ namespace client
         ////for(int i = 0; i < 100;i ++)
         //while(1)
         //{
-            ////send_insert(SERVER_SOCKET, 0, 0, 'A' + i);
-            //send_insert(SERVER_SOCKET, 0, 0, 'A');
-            //usleep(1000);
+        ////send_insert(SERVER_SOCKET, 0, 0, 'A' + i);
+        //send_insert(SERVER_SOCKET, 0, 0, 'A');
+        //usleep(1000);
         //}
         //send_write(SERVER_SOCKET, "out.txt");
         //while(1);
@@ -509,6 +540,11 @@ namespace client
         thread2.detach();
 
         //while(1);
+
+        if(!START_SERVER)
+        {
+            send_get_full(SERVER_SOCKET);
+        }
 
         int in;     // a char, but uses higher values for special chars
         while(1)

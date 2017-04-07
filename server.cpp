@@ -4,12 +4,15 @@ extern std::string SERVER_PORT;
 
 namespace server
 {
-
     int SERVER_SOCKET;
 
     std::vector<pthread_t> threads;
 
     TextContainer<BlockingVector> text;
+
+    std::vector<Client> clients;
+
+    int Client::nextid = 0;
 
     void sigterm_handler(int sig)
     {
@@ -110,11 +113,44 @@ namespace server
         return ret;
     }
 
+    std::vector<int> get_socket_list()
+    {
+        std::vector<int> ret;
+
+        for(Client& c : clients)
+            ret.push_back(c.socket);
+
+        return ret;
+    }
+
+    void forward_message(std::pair<char*, size_t> msg, int ignore)
+    {
+        for (Client& c : clients)
+        {
+            if(c.id != ignore && c.alive)
+            {
+                //fprintf(stderr, "Forwarded message from %d to %d (sock: %d)\n", ignore, c.id, c.socket);
+                send_message(c.socket, msg.first, msg.second);
+            }
+        }
+    }
+
+    void broadcast_message(char* buf, size_t len)
+    {
+        for (Client& c : clients)
+        {
+            if(c.alive)
+                send_message(c.socket, buf, len);
+        }
+    }
+
     void* thread_routine(void* arg)
     {
-        int client_fd = (int)(long)arg;
+        int client_idx = (int)(long)arg;
+        int client_fd = clients[client_idx].socket;
 
-        std::cout << "Thread starting up" << std::endl;
+        //std::cout << "Thread starting up" << std::endl;
+        printf("Thread starting up for client %d on socket %d\n", clients[client_idx].id, client_fd);
 
         // step 1 is to send the current text to them as data
 
@@ -128,14 +164,17 @@ namespace server
             // annoying here but used for the client code to not block
             if(msg.first == nullptr && msg.second)
             {
-                fprintf(stderr, "[!!] Server got bad message!\n");
-                continue;
+                fprintf(stderr, "[!!] Server had trouble reading message!\n");
+                break;
+            }
+            else if (msg.first == nullptr && msg.second == -1)
+            {
+                // they disconnected, probably
+
+                break;
             }
             else if (msg.first == nullptr)
-            {
-                // just a normal non-block
                 continue;
-            }
 
             PacketType type = get_bytes_as<PacketType>(msg.first, 0);
 
@@ -168,6 +207,8 @@ namespace server
 
                     text.insert(y, x, c);
 
+                    forward_message(msg, clients[client_idx].id);
+
                     break;
                 }
 
@@ -180,6 +221,8 @@ namespace server
                     x = get_bytes_as<size_t>(msg.first, sizeof(short) + sizeof(size_t));
 
                     text.remove(y, x);
+
+                    forward_message(msg, clients[client_idx].id);
 
                     break;
                 }
@@ -206,7 +249,8 @@ namespace server
 
                     size_t lines = text.readFromFile(filename);
 
-                    send_read_confirm(client_fd, lines, filename);
+                    broadcast_read_confirm(get_socket_list(), lines, filename);
+                    broadcast_full_content(get_socket_list(), text);
 
                     break;
                 }
@@ -214,7 +258,7 @@ namespace server
                 case PacketType::GetFull:
                 {
                     // send a full to them
-                    fprintf(stderr, "got full request\n");
+                    //fprintf(stderr, "got full request\n");
                     send_full_content(client_fd, text);
 
                     break;
@@ -231,7 +275,10 @@ namespace server
             //usleep(1000 * 10);   // 1ms * 10
         }
 
-        std::cout << "Thread shutting down" << std::endl;
+        //std::cout << "Thread shutting down" << std::endl;
+        printf("Thread handling client %d (sock %d) shutting down\n", clients[client_idx].id, client_fd);
+
+        clients[client_idx].alive = false;
 
         return (void*)(long)client_fd;
     }
@@ -264,8 +311,9 @@ namespace server
                 return 5;
             }
 
+            clients.push_back(Client(client_fd));
             threads.push_back(pthread_t());
-            pthread_create(&threads.back(), nullptr, thread_routine, (void*)(long)client_fd);
+            pthread_create(&threads.back(), nullptr, thread_routine, (void*)(long)(clients.size()-1));
         }
 
         std::cout << "Joining threads" << std::endl;

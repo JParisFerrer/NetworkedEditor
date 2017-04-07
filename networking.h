@@ -106,6 +106,7 @@ bool send_write_confirm(int sock, std::string filename);
 bool send_read(int sock, std::string filename);
 
 bool send_read_confirm(int sock, size_t lines, std::string filename);
+bool broadcast_read_confirm(const std::vector<int>& sockets, size_t lines, std::string filename);
 
 bool send_get_full(int sock);
 
@@ -128,6 +129,33 @@ bool send_full_content(int sock, TextContainer<T>& text)
     free(ser.first);
 
     return ret;
+}
+
+template <class T>
+bool broadcast_full_content(const std::vector<int>& sockets, TextContainer<T>& text)
+{
+    std::pair<char*, size_t> ser = text.serialize();
+
+    size_t len = sizeof(short) + ser.second;
+    char* buf = new char[len];
+
+    *(short*)buf = htons((short)PacketType::FullContent);
+    memcpy(buf + sizeof(short), ser.first, ser.second);
+
+    for(int sock : sockets)
+    {
+
+        bool ret = send_message(sock, buf, len);
+
+        if(!ret)
+            fprintf(stderr, "[!!!] [%s] bad return value for socket %d\n", __func__, sock);
+
+    }
+
+    free(ser.first);
+
+    return true;
+
 }
 
 #endif

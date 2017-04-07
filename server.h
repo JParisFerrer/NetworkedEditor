@@ -25,6 +25,26 @@
 namespace server
 {
 
+    class Client
+    {
+        private:
+            static int nextid;
+
+        public:
+            int socket;
+            bool alive;
+            const int id;
+            
+            Client(int sock) : id(Client::nextid)
+            {
+                socket = sock;
+                Client::nextid++;
+                alive = true;
+            }
+
+    };
+
+
     int server_entrypoint();
 
 }
