@@ -125,7 +125,7 @@ namespace client
         wmove(commandWindow, sy_command, sx_command);
 
         wrefresh(mainWindow);
-        wrefresh(commandWindow);
+        //wrefresh(commandWindow);
         wrefresh(currWindow);       // the cursor is drawn on refresh
 
         //fprintf(stderr, "left function %s\n", __func__);
@@ -430,6 +430,21 @@ namespace client
                 c = get_bytes_as<int>(msg.first, sizeof(short) + sizeof(size_t) * 2);
 
                 text.insert(y, x, c);
+
+                if(c == ENTER_KEY)
+                {
+                    int x, y;
+                    int maxx, maxy;
+                    getmaxyx(mainWindow, y, x);
+                    getyx(mainWindow, y, x);
+                    numlines++;
+                    if(numdisplaylines < maxy)
+                        numdisplaylines++;
+
+                    //text.insert(y + lineoffset, x, in);
+                }
+
+
 
                 break;
             }
