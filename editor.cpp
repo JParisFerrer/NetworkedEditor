@@ -21,11 +21,17 @@ namespace client
     
     int SERVER_SOCKET;
 
+    volatile bool SERVER_LOST = false;
+    volatile bool HANDLED_SERVER_LOST = false;
+
     //vector<vector< int >> data;
     TextContainer<BlockingVector> text;
     std::vector<int> commands;
 
     std::mutex mlock;
+
+    std::thread thread_messageHandler;
+    std::thread thread_getFull;
 
     ssize_t numdisplaylines = 1;
     ssize_t numlines = 1;
@@ -50,19 +56,22 @@ namespace client
     void move_cursor(size_t y, size_t x)
     {
         text.move(y, x);
-        send_move(SERVER_SOCKET, y, x);
+        if(!SERVER_LOST)
+            send_move(SERVER_SOCKET, y, x);
     }
 
     void insert_char(size_t y, size_t x, int c)
     {
         text.insert(y, x, c);
-        send_insert(SERVER_SOCKET, y, x, c);
+        if(!SERVER_LOST)
+            send_insert(SERVER_SOCKET, y, x, c);
     }
 
     void remove_char(size_t y, size_t x)
     {
         text.remove(y, x);
-        send_remove(SERVER_SOCKET, y, x);
+        if(!SERVER_LOST)
+            send_remove(SERVER_SOCKET, y, x);
     }
 
     void reset_x(WINDOW* win, bool notify = true)
@@ -80,9 +89,9 @@ namespace client
     {
         for(auto& c : commands)
             c = ' ';
-        waddstr(commandWindow, "                                                                                                                                              ");
+        waddstr(commandWindow, "                                                                                                                                                                                                                  ");
         // don't notify because this is command window stuff
-        reset_x(currWindow, false);
+        reset_x(commandWindow, false);
 
         wrefresh(commandWindow);
     }
@@ -96,6 +105,15 @@ namespace client
         sleep(1);
         clear_cmd_window();
         wrefresh(commandWindow);
+    }
+
+    void put_in_cmd_window(const char* c)
+    {
+        clear_cmd_window();
+        reset_x(commandWindow, false);
+        waddstr(commandWindow, c);
+        wrefresh(commandWindow);
+
     }
 
     void refresh_screen()
@@ -189,6 +207,14 @@ namespace client
         fprintf(stderr, "in function %s\n", __func__);
 
         endwin();
+
+        // tell those threads to die
+        SERVER_LOST = true;
+
+        thread_messageHandler.join();
+        thread_getFull.join();
+
+
         exit(1);
     }
 
@@ -354,6 +380,175 @@ namespace client
         return 0;
     }
 
+    void signal_disconnect()
+    {
+        SERVER_LOST = true;
+
+        fprintf(stderr, "Client lost connection to the server\n");
+    }
+
+    void handle_disconnect()
+    {
+        int c;
+        const char* msg = "Disconnected! (s)ave locally and quit, (c)ontinue locally, or (q)uit?";
+
+        nocbreak();
+        raw();
+
+        while(1)
+        {
+            put_in_cmd_window(msg);
+
+            c = wgetch(commandWindow);
+
+            if(c == 's')
+            {
+                fprintf(stderr, "client chose to save locally and quit\n");
+
+                clear_cmd_window();
+
+                // move to the beginning of the window
+                wmove(commandWindow, 0, 0);
+
+                while(1)
+                {
+                    c = wgetch(commandWindow);
+
+                    fprintf(stderr, "client got %d (%c)\n", c, (char)c);
+
+                    if (c == KEY_UP)
+                    {
+                        move_win_rel(commandWindow, 0, -1);
+                    }
+                    else if (c == KEY_DOWN)
+                    {
+                        move_win_rel(commandWindow, 0, 1);
+                    }
+                    else if (c == KEY_LEFT)
+                    {
+                        move_win_rel(commandWindow, -1, 0);
+                    }
+                    else if (c == KEY_RIGHT)
+                    {
+                        move_win_rel(commandWindow, 1, 0);
+                    }
+                    else if(c == ENTER_KEY || c == 10)
+                    {
+                        std::stringstream str;
+                        for(auto it = commands.begin(); it != commands.end(); it++)
+                            str << (char)*it;
+
+                        //print_in_cmd_window(str.str().c_str());
+
+                        std::vector<std::string> v = split(str.str(), ' ');
+                        fprintf(stderr, "v size = %lu, ,v[0]=%s\n", v.size(), v[0].c_str());
+                        v.pop_back();
+
+                        if(v.size() == 1)
+                        {
+                            text.writeToFile(v[0]);
+                            char* c;
+
+                            asprintf(&c, "Saved file: %s", v[0].c_str());
+                            print_in_cmd_window(c);
+                            free(c);        // I think it uses malloc
+
+                            //fprintf(stderr, "Writing file %s\n", v[1].c_str());
+
+                            //send_write(SERVER_SOCKET, v[1]);
+
+                            endwin();
+                            fprintf(stderr, "Client chose to save and exit after disconnect\n");
+
+                            thread_messageHandler.join();
+                            thread_getFull.join();
+
+                            exit(0);
+                        }
+                        else
+                        {
+                            // bad args
+                            print_in_cmd_window("Bad # of args: ");
+                            print_in_cmd_window(std::to_string(v.size()).c_str());
+                        }
+                    }
+                    else if (c == KEY_BACKSPACE)
+                    {
+                        int x, y;
+                        getyx(currWindow, y, x);
+
+                        if(x > 0)
+                        {
+                            move_win_rel(commandWindow, -1, 0);
+
+                            getyx(commandWindow, y, x);
+
+                            //commands[x] = ' ';
+                            commands.erase(commands.begin() + x);
+                            commands.push_back(' ');
+
+                        }
+                    }
+                    else if (c == DELETE_KEY)
+                    {
+                        // like backspace but the other way
+                        int x, y;
+                        getyx(currWindow, y, x);
+
+                        if(currWindow == commandWindow)
+                        {
+                            //commands[x] = ' ';
+                            commands.erase(commands.begin() + x);
+                            commands.push_back(' ');
+                        }
+                    }
+                    else if (isprint(c))
+                    {
+                        int x, y;
+                        getyx(commandWindow, y, x);
+
+                        mvwaddch(commandWindow, y, x, c);
+                        commands[x] = c;
+
+                    }
+                    else {} // garbage char
+
+                    wrefresh(commandWindow);
+                }
+            } 
+            else if (c == 'c')
+            {
+                fprintf(stderr, "Client chose to continue locally after disconnect\n");
+
+                HANDLED_SERVER_LOST = true;
+
+                clear_cmd_window();
+
+                break;
+            }
+            else if (c == 'q')
+            {
+                endwin();
+
+                fprintf(stderr, "Client chose to exit after disconnect\n");
+
+                thread_messageHandler.join();
+                thread_getFull.join();
+
+                exit(0);
+            }
+            else 
+            {
+                // invalid option, go again
+
+                print_in_cmd_window("invalid option! please choose s, c, or q");
+            }
+        }
+
+        halfdelay(1);
+
+    }
+
     void handleMessage(std::pair<char*, size_t> msg)
     {
         PacketType type = get_bytes_as<PacketType>(msg.first, 0);
@@ -363,110 +558,110 @@ namespace client
         switch(type)
         {
             case PacketType::WriteConfirmed:
-            {
-                // just a string
-                std::string filename(msg.first + sizeof(short));
-
-                char* c;
-
-                asprintf(&c, "Saved file: %s", filename.c_str());
-                print_in_cmd_window(c);
-                free(c);        // I think it uses malloc
-
-                clear_cmd_window();
-
-                break;
-            }
-
-            case PacketType::ReadConfirmed:
-            {
-                // a number of lines and then a string
-                size_t linesread = get_bytes_as<size_t>(msg.first, sizeof(short));
-
-                std::string filename(msg.first + sizeof(short) + sizeof(size_t));
-
-                char* c;
-
-                asprintf(&c, "Read file: %s [%lu lines]", filename.c_str(), linesread);
-                print_in_cmd_window(c);
-                free(c);        // I think it uses malloc
-
-                clear_cmd_window();
-
-                //send_get_full(SERVER_SOCKET);
-
-                break;
-            }
-
-            case PacketType::FullContent:
-            {
-                // rest of it is serialized thing
-                size_t lines = text.deserialize(msg.first + sizeof(short), msg.second - sizeof(short));
-
-                numlines = lines;
-
-                int y, x;
-                getmaxyx(mainWindow, y, x);
-
-                if(numlines > y)
-                    numdisplaylines = y;
-                else
-                    numdisplaylines = numlines;
-
-                //wrefresh(mainWindow);
-
-                break;
-            }
-
-            case PacketType::Insert:
-            {
-                //fprintf(stdout, "Got insert!\n");
-
-                size_t y, x;
-                int c;
-
-                y = get_bytes_as<size_t>(msg.first, sizeof(short));
-                x = get_bytes_as<size_t>(msg.first, sizeof(short) + sizeof(size_t));
-                c = get_bytes_as<int>(msg.first, sizeof(short) + sizeof(size_t) * 2);
-
-                text.insert(y, x, c);
-
-                if(c == ENTER_KEY)
                 {
-                    int x, y;
-                    int maxx, maxy;
-                    getmaxyx(mainWindow, y, x);
-                    getyx(mainWindow, y, x);
-                    numlines++;
-                    if(numdisplaylines < maxy)
-                        numdisplaylines++;
+                    // just a string
+                    std::string filename(msg.first + sizeof(short));
 
-                    //text.insert(y + lineoffset, x, in);
+                    char* c;
+
+                    asprintf(&c, "Saved file: %s", filename.c_str());
+                    print_in_cmd_window(c);
+                    free(c);        // I think it uses malloc
+
+                    clear_cmd_window();
+
+                    break;
                 }
 
+            case PacketType::ReadConfirmed:
+                {
+                    // a number of lines and then a string
+                    size_t linesread = get_bytes_as<size_t>(msg.first, sizeof(short));
+
+                    std::string filename(msg.first + sizeof(short) + sizeof(size_t));
+
+                    char* c;
+
+                    asprintf(&c, "Read file: %s [%lu lines]", filename.c_str(), linesread);
+                    print_in_cmd_window(c);
+                    free(c);        // I think it uses malloc
+
+                    clear_cmd_window();
+
+                    //send_get_full(SERVER_SOCKET);
+
+                    break;
+                }
+
+            case PacketType::FullContent:
+                {
+                    // rest of it is serialized thing
+                    size_t lines = text.deserialize(msg.first + sizeof(short), msg.second - sizeof(short));
+
+                    numlines = lines;
+
+                    int y, x;
+                    getmaxyx(mainWindow, y, x);
+
+                    if(numlines > y)
+                        numdisplaylines = y;
+                    else
+                        numdisplaylines = numlines;
+
+                    //wrefresh(mainWindow);
+
+                    break;
+                }
+
+            case PacketType::Insert:
+                {
+                    //fprintf(stdout, "Got insert!\n");
+
+                    size_t y, x;
+                    int c;
+
+                    y = get_bytes_as<size_t>(msg.first, sizeof(short));
+                    x = get_bytes_as<size_t>(msg.first, sizeof(short) + sizeof(size_t));
+                    c = get_bytes_as<int>(msg.first, sizeof(short) + sizeof(size_t) * 2);
+
+                    text.insert(y, x, c);
+
+                    if(c == ENTER_KEY)
+                    {
+                        int x, y;
+                        int maxx, maxy;
+                        getmaxyx(mainWindow, y, x);
+                        getyx(mainWindow, y, x);
+                        numlines++;
+                        if(numdisplaylines < maxy)
+                            numdisplaylines++;
+
+                        //text.insert(y + lineoffset, x, in);
+                    }
 
 
-                break;
-            }
+
+                    break;
+                }
 
             case PacketType::Remove:
-            {
-                //fprintf(stdout, "Got remove!\n");
+                {
+                    //fprintf(stdout, "Got remove!\n");
 
-                size_t y, x;
-                y = get_bytes_as<size_t>(msg.first, sizeof(short));
-                x = get_bytes_as<size_t>(msg.first, sizeof(short) + sizeof(size_t));
+                    size_t y, x;
+                    y = get_bytes_as<size_t>(msg.first, sizeof(short));
+                    x = get_bytes_as<size_t>(msg.first, sizeof(short) + sizeof(size_t));
 
-                text.remove(y, x);
+                    text.remove(y, x);
 
-                break;
-            }
+                    break;
+                }
 
             default:
-            {
-                fprintf(stderr, "Client got unhandled message type %d = %s\n", (short)type, ((short)type < PacketTypeNum ? PacketTypeNames[(short)type].c_str() : ""));
-                break;
-            }
+                {
+                    fprintf(stderr, "Client got unhandled message type %d = %s\n", (short)type, ((short)type < PacketTypeNum ? PacketTypeNames[(short)type].c_str() : ""));
+                    break;
+                }
         }
     }
 
@@ -495,12 +690,20 @@ namespace client
 
                 mlock.unlock();
             }
+            else if (msg.second == -1)
+            {
+                // they disconnected
+                signal_disconnect();
+
+                // leave the thread
+                return;
+            }
         }
     }
 
     void getFullLoop()
     {
-        while(1)
+        while(!SERVER_LOST)
         {
             sleep(1);
             send_get_full(SERVER_SOCKET);
@@ -548,11 +751,8 @@ namespace client
 
         wrefresh(currWindow);
 
-        std::thread thread(handleMessages);
-        thread.detach();
-
-        std::thread thread2(getFullLoop);
-        thread2.detach();
+        thread_messageHandler = std::thread(handleMessages);
+        thread_getFull = std::thread(getFullLoop);
 
         //while(1);
 
@@ -574,6 +774,10 @@ namespace client
             //fprintf(stderr, "read char: %d\n", in);
 
             mlock.lock();
+
+            if(SERVER_LOST && !HANDLED_SERVER_LOST)
+                handle_disconnect();
+
 
             if(in == CTRL_Q)        // exit on CTRL+Q
             {
@@ -641,13 +845,13 @@ namespace client
                                 if(v.size() == 2)
                                 {
                                     /*
-                                    text.writeToFile(v[1]);
-                                    char* c;
+                                       text.writeToFile(v[1]);
+                                       char* c;
 
-                                    asprintf(&c, "Saved file: %s", v[1].c_str());
-                                    print_in_cmd_window(c);
-                                    free(c);        // I think it uses malloc
-                                    */
+                                       asprintf(&c, "Saved file: %s", v[1].c_str());
+                                       print_in_cmd_window(c);
+                                       free(c);        // I think it uses malloc
+                                       */
 
                                     fprintf(stderr, "Writing file %s\n", v[1].c_str());
 
@@ -665,27 +869,27 @@ namespace client
                                 if(v.size() == 2)
                                 {
                                     /*
-                                    size_t newlines = text.readFromFile(v[1]);
-                                    char* c;
+                                       size_t newlines = text.readFromFile(v[1]);
+                                       char* c;
 
-                                    move_win_rel(mainWindow, -9999999, -99999999);
+                                       move_win_rel(mainWindow, -9999999, -99999999);
 
-                                    numlines = newlines;
-                                    if(numlines > maxy)
-                                    {
-                                        numdisplaylines = maxy;
-                                    }
-                                    else
-                                    {
-                                        numdisplaylines = numlines;
-                                    }
+                                       numlines = newlines;
+                                       if(numlines > maxy)
+                                       {
+                                       numdisplaylines = maxy;
+                                       }
+                                       else
+                                       {
+                                       numdisplaylines = numlines;
+                                       }
 
-                                    wclear(mainWindow);
+                                       wclear(mainWindow);
 
-                                    asprintf(&c, "Read from file: %s, %lu lines", v[1].c_str(), newlines);
-                                    print_in_cmd_window(c);
-                                    free(c);        // I think it uses malloc
-                                    */
+                                       asprintf(&c, "Read from file: %s, %lu lines", v[1].c_str(), newlines);
+                                       print_in_cmd_window(c);
+                                       free(c);        // I think it uses malloc
+                                       */
 
                                     send_read(SERVER_SOCKET, v[1]);
                                 }
@@ -695,6 +899,29 @@ namespace client
                                     print_in_cmd_window("Bad # of args: ");
                                     print_in_cmd_window(std::to_string(v.size()).c_str());
                                 }    
+                            }
+                            else if (v[0] == "wl")
+                            {
+                                // write local
+                                if(v.size() == 2)
+                                {
+                                    text.writeToFile(v[1]);
+                                    char* c;
+
+                                    asprintf(&c, "Saved file: %s", v[1].c_str());
+                                    print_in_cmd_window(c);
+                                    free(c);        // I think it uses malloc
+
+                                    //fprintf(stderr, "Writing file %s\n", v[1].c_str());
+
+                                    //send_write(SERVER_SOCKET, v[1]);
+                                }
+                                else
+                                {
+                                    // bad args
+                                    print_in_cmd_window("Bad # of args: ");
+                                    print_in_cmd_window(std::to_string(v.size()).c_str());
+                                }
                             }
 
                         }
@@ -827,6 +1054,8 @@ namespace client
                 // this cerr used to get the keycodes of things
                 // that aren't already handled, like CTRL+W, etc
                 //std::cerr << in << std::endl;
+
+                fprintf(stderr, "Client got unhandled char: %d (%c)\n", in, (char)in);
             }
 END:
 
@@ -838,6 +1067,11 @@ END:
         endwin();
 
         fprintf(stderr, "Client exiting normally\n");
+
+        thread_messageHandler.join();
+        thread_getFull.join();
+
+        fprintf(stderr, "Client joined threads normally\n");
 
         return 0;
     }
