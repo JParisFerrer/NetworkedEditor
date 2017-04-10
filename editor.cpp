@@ -85,10 +85,17 @@ namespace client
             //text.move(y + lineoffset, 0);
     }
 
-    void clear_cmd_window()
+    void clear_cmd_window(bool clear_commands = true)
     {
-        for(auto& c : commands)
-            c = ' ';
+        if(clear_commands)
+        {
+            for(auto& c : commands)
+                c = ' ';
+        }
+
+        // don't notify because this is command window stuff
+        reset_x(commandWindow, false);
+
         waddstr(commandWindow, "                                                                                                                                                                                                                  ");
         // don't notify because this is command window stuff
         reset_x(commandWindow, false);
@@ -96,13 +103,13 @@ namespace client
         wrefresh(commandWindow);
     }
 
-    void print_in_cmd_window(const char* c)
+    void print_in_cmd_window(const char* c, int sleeptime = 1)
     {
         clear_cmd_window();
         reset_x(commandWindow, false);
         waddstr(commandWindow, c);
         wrefresh(commandWindow);
-        sleep(1);
+        sleep(sleeptime);
         clear_cmd_window();
         wrefresh(commandWindow);
     }
@@ -407,6 +414,8 @@ namespace client
 
                 clear_cmd_window();
 
+                print_in_cmd_window("enter file name to save into:", 2);
+
                 // move to the beginning of the window
                 wmove(commandWindow, 0, 0);
 
@@ -414,7 +423,7 @@ namespace client
                 {
                     c = wgetch(commandWindow);
 
-                    fprintf(stderr, "client got %d (%c)\n", c, (char)c);
+                    //fprintf(stderr, "client got %d (%c)\n", c, (char)c);
 
                     if (c == KEY_UP)
                     {
@@ -470,6 +479,8 @@ namespace client
                             // bad args
                             print_in_cmd_window("Bad # of args: ");
                             print_in_cmd_window(std::to_string(v.size()).c_str());
+
+                            print_in_cmd_window("enter file name to save into:", 2);
                         }
                     }
                     else if (c == KEY_BACKSPACE)
@@ -495,23 +506,37 @@ namespace client
                         int x, y;
                         getyx(currWindow, y, x);
 
-                        if(currWindow == commandWindow)
-                        {
-                            //commands[x] = ' ';
-                            commands.erase(commands.begin() + x);
-                            commands.push_back(' ');
-                        }
+                        //commands[x] = ' ';
+                        commands.erase(commands.begin() + x);
+                        commands.push_back(' ');
                     }
                     else if (isprint(c))
                     {
                         int x, y;
                         getyx(commandWindow, y, x);
 
-                        mvwaddch(commandWindow, y, x, c);
+                        move_win_rel(commandWindow, 1, 0);
+
+                        //mvwaddch(commandWindow, y, x, c);
                         commands[x] = c;
 
                     }
                     else {} // garbage char
+
+                    int y, x;
+                    getyx(commandWindow, y, x);
+
+                    //fprintf(stderr, "updating command window\n");
+
+                    for(int xi = 0; xi < commands.size(); xi++)
+                    {
+                        // 0 is y coord in the window
+                        mvwaddch(commandWindow, 0, xi, commands[xi]);
+                        //fprintf(stderr, "%c", (char)commands[xi]);
+                    }
+                    //fprintf(stderr, "\n");
+
+                    wmove(commandWindow, y, x);
 
                     wrefresh(commandWindow);
                 }
@@ -1055,7 +1080,8 @@ namespace client
                 // that aren't already handled, like CTRL+W, etc
                 //std::cerr << in << std::endl;
 
-                fprintf(stderr, "Client got unhandled char: %d (%c)\n", in, (char)in);
+                if(in != -1)
+                    fprintf(stderr, "Client got unhandled char: %d (%c)\n", in, (char)in);
             }
 END:
 
