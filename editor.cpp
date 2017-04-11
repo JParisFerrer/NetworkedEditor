@@ -700,6 +700,9 @@ namespace client
             std::pair<char*, size_t> msg = get_message(SERVER_SOCKET, true);
             //fprintf(stderr, "Client got message\n");
 
+            if(SERVER_LOST)
+                return;
+
             if(msg.first)
             {
 
@@ -1093,6 +1096,9 @@ END:
         endwin();
 
         fprintf(stderr, "Client exiting normally\n");
+
+        // tell those threads to die
+        SERVER_LOST = true;
 
         thread_messageHandler.join();
         thread_getFull.join();
