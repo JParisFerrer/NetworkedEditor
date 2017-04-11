@@ -84,6 +84,7 @@ size_t BlockingVector::line_width(size_t line)
 }
 
 void BlockingVector::writeToFile(std::string fileName){
+    std::lock_guard<std::mutex> lock(vectorLock);
     //init file with vector data
     std::ofstream outFile;
     outFile.open(fileName, std::fstream::out);
@@ -224,6 +225,7 @@ size_t BlockingVector::deserialize(char* ibuf, size_t len)
 /*debugging utilties*/
 /* TODO ?delete?*/
 void BlockingVector::printDebug(){
+    std::lock_guard<std::mutex> lock(vectorLock);
     std::cout<<std::endl;
     for(size_t i = 0; i<this->data.size(); i++){
         for(size_t j = 0; j<this->data[i].size(); j++){

@@ -741,6 +741,8 @@ namespace client
 
     void getFullLoop()
     {
+        return;
+
         while(!SERVER_LOST)
         {
             sleep(1);
