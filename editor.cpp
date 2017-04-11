@@ -188,7 +188,7 @@ namespace client
                 capped_y = 0;
             }
 
-            capped_x = std::min((size_t)(x + xoffs), text.line_width(capped_y));
+            capped_x = std::min((ssize_t)(x + xoffs), (ssize_t)text.line_width(capped_y));
 
             if(capped_x < 0)
                 capped_x = 0;

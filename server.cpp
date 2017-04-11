@@ -189,7 +189,7 @@ namespace server
                     y = get_bytes_as<size_t>(msg.first, sizeof(short));
                     x = get_bytes_as<size_t>(msg.first, sizeof(short) + sizeof(size_t));
 
-                    text.move(y, x);
+                    //text.move(y, x);
 
                     break;
                 }
