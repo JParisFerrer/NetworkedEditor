@@ -677,6 +677,16 @@ namespace client
                     y = get_bytes_as<size_t>(msg.first, sizeof(short));
                     x = get_bytes_as<size_t>(msg.first, sizeof(short) + sizeof(size_t));
 
+                    // x == 0
+                    if(x == -1)
+                    {
+                           // only subtract numdisplaylines if we are running out of lines
+                            if(numlines == numdisplaylines)
+                                numdisplaylines--;
+                            numlines--;
+
+                            //move_win_rel(mainWindow, above_width, -1);
+                    }
                     text.remove(y, x);
 
                     break;
@@ -1048,7 +1058,7 @@ namespace client
 
                         // get the container to remove the line
                         //text.remove(y+lineoffset+1, -1);
-                        remove_char(y + lineoffset, -1);
+                        remove_char(y + lineoffset + 1, -1);
 
                         // only subtract numdisplaylines if we are running out of lines
                         if(numlines == numdisplaylines)
