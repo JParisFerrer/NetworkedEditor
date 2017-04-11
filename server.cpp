@@ -1,6 +1,7 @@
 #include "server.h"
 
 extern std::string SERVER_PORT;
+extern volatile bool SHUTDOWN_NETWORK;
 
 namespace server
 {
@@ -26,6 +27,9 @@ namespace server
     // credit to https://beej.us/guide/bgnet/output/html/multipage/clientserver.html
     int setup_network()
     {
+        SHUTDOWN_NETWORK = false;
+
+
         struct addrinfo hints, *server_info, *trav;
 
         memset(&hints, 0, sizeof(hints));

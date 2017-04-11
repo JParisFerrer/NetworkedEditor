@@ -2,6 +2,8 @@
 
 std::mutex sendlock;
 
+volatile bool SHUTDOWN_NETWORK;
+
 //https://stackoverflow.com/questions/3022552/is-there-any-standard-htonl-like-function-for-64-bits-integers-in-c
 uint64_t htonll(uint64_t value)
 {
@@ -121,6 +123,9 @@ std::pair<char*,size_t> get_message(int sock, bool block)
     {
         // peek so that we can only read what we need to get the footer
         ssize_t got = recv(sock, tbuf, MTU, MSG_PEEK);
+
+        if(SHUTDOWN_NETWORK)
+            return std::make_pair(nullptr, 0);
 
         //fprintf(stderr, "got: %ld\n", got);
 

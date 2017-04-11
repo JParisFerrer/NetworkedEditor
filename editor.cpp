@@ -5,6 +5,8 @@ extern std::string SERVER_SEARCH_PORT;
 extern std::string SERVER_ADDRESS;
 extern bool START_SERVER;
 
+extern volatile bool SHUTDOWN_NETWORK;
+
 namespace client
 {
 
@@ -56,21 +58,21 @@ namespace client
     void move_cursor(size_t y, size_t x)
     {
         text.move(y, x);
-        if(!SERVER_LOST)
+        if(!SERVER_LOST && !SHUTDOWN_NETWORK)
             send_move(SERVER_SOCKET, y, x);
     }
 
     void insert_char(size_t y, size_t x, int c)
     {
         text.insert(y, x, c);
-        if(!SERVER_LOST)
+        if(!SERVER_LOST && !SHUTDOWN_NETWORK)
             send_insert(SERVER_SOCKET, y, x, c);
     }
 
     void remove_char(size_t y, size_t x)
     {
         text.remove(y, x);
-        if(!SERVER_LOST)
+        if(!SERVER_LOST && !SHUTDOWN_NETWORK)
             send_remove(SERVER_SOCKET, y, x);
     }
 
@@ -217,6 +219,10 @@ namespace client
 
         // tell those threads to die
         SERVER_LOST = true;
+        SHUTDOWN_NETWORK = true;
+
+        // force that persistent thread to die
+        close(SERVER_SOCKET);
 
         thread_messageHandler.join();
         thread_getFull.join();
@@ -260,6 +266,8 @@ namespace client
     int network_setup()
     {
         fprintf(stderr, "in function %s\n", __func__);
+
+        SHUTDOWN_NETWORK = false;
 
         struct addrinfo hints, *server_info, *traverser;
         int yes = 1, no = 0;
@@ -390,6 +398,7 @@ namespace client
     void signal_disconnect()
     {
         SERVER_LOST = true;
+        SHUTDOWN_NETWORK = true;
 
         fprintf(stderr, "Client lost connection to the server\n");
     }
@@ -468,6 +477,9 @@ namespace client
 
                             endwin();
                             fprintf(stderr, "Client chose to save and exit after disconnect\n");
+
+                            // force that persistent thread to die
+                            close(SERVER_SOCKET);
 
                             thread_messageHandler.join();
                             thread_getFull.join();
@@ -556,6 +568,9 @@ namespace client
                 endwin();
 
                 fprintf(stderr, "Client chose to exit after disconnect\n");
+
+                // force that persistent thread to die
+                close(SERVER_SOCKET);
 
                 thread_messageHandler.join();
                 thread_getFull.join();
@@ -710,7 +725,7 @@ namespace client
             std::pair<char*, size_t> msg = get_message(SERVER_SOCKET, true);
             //fprintf(stderr, "Client got message\n");
 
-            if(SERVER_LOST)
+            if(SERVER_LOST || SHUTDOWN_NETWORK)
                 return;
 
             if(msg.first)
@@ -743,7 +758,7 @@ namespace client
     {
         return;
 
-        while(!SERVER_LOST)
+        while(!SERVER_LOST && !SHUTDOWN_NETWORK)
         {
             sleep(1);
             send_get_full(SERVER_SOCKET);
@@ -815,7 +830,7 @@ namespace client
 
             mlock.lock();
 
-            if(SERVER_LOST && !HANDLED_SERVER_LOST)
+            if((SERVER_LOST || SHUTDOWN_NETWORK) && !HANDLED_SERVER_LOST)
                 handle_disconnect();
 
 
@@ -1111,6 +1126,10 @@ END:
 
         // tell those threads to die
         SERVER_LOST = true;
+        SHUTDOWN_NETWORK = true;
+
+        // force that persistent thread to die
+        close(SERVER_SOCKET);
 
         thread_messageHandler.join();
         thread_getFull.join();
