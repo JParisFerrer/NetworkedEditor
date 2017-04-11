@@ -309,7 +309,7 @@ bool send_message(int sock, char* buf, size_t num_bytes)
 bool send_move(int sock, size_t y, size_t x)
 {
     size_t len = sizeof(short) + 2 * sizeof(size_t);
-    char* buf = new char[len];
+    char* buf = new char[len]();
 
     *(short*)buf = htons((short)PacketType::Move);
     *(size_t*)(buf + sizeof(short)) = htonll(y);
@@ -329,7 +329,7 @@ bool send_move(int sock, size_t y, size_t x)
 bool send_insert(int sock, size_t y, size_t x, int c)
 {
     size_t len = sizeof(short) + sizeof(int) + 2 * sizeof(size_t);
-    char* buf = new char[len];
+    char* buf = new char[len]();
 
     *(short*)buf = htons((short)PacketType::Insert);
     *(size_t*)(buf + sizeof(short)) = htonll(y);
@@ -352,7 +352,7 @@ bool send_insert(int sock, size_t y, size_t x, int c)
 bool send_remove(int sock, size_t y, size_t x)
 {
     size_t len = sizeof(short) + 2 * sizeof(size_t);
-    char* buf = new char[len];
+    char* buf = new char[len]();
 
     *(short*)buf = htons((short)PacketType::Remove);
     *(size_t*)(buf + sizeof(short)) = htonll(y);
@@ -374,7 +374,7 @@ bool send_write(int sock, std::string filename)
 {
     size_t len = sizeof(short) + filename.length() + 1;
     len = std::max((size_t)10, len);// for reasons, make this at least 10
-    char* buf = new char[len];
+    char* buf = new char[len]();
 
     *(short*)buf = htons((short)PacketType::WriteToDisk);
     memcpy(buf + sizeof(short), filename.c_str(), filename.length() + 1);
@@ -394,7 +394,7 @@ bool send_write_confirm(int sock, std::string filename)
     fprintf(stderr, "%s\n", __func__);
     size_t len = sizeof(short) + filename.length() + 1;
     len = std::max((size_t)10, len);// for reasons, make this at least 10
-    char* buf = new char[len];
+    char* buf = new char[len]();
 
     *(short*)buf = htons((short)PacketType::WriteConfirmed);
     memcpy(buf + sizeof(short), filename.c_str(), filename.length() + 1);
@@ -413,7 +413,7 @@ bool send_read(int sock, std::string filename)
 {
     size_t len = sizeof(short) + filename.length() + 1;
     len = std::max((size_t)10, len);// for reasons, make this at least 10
-    char* buf = new char[len];
+    char* buf = new char[len]();
 
     *(short*)buf = htons((short)PacketType::ReadFromDisk);
     memcpy(buf + sizeof(short), filename.c_str(), filename.length()+1);
@@ -432,7 +432,7 @@ bool send_read_confirm(int sock, size_t lines, std::string filename)
 {
     size_t len = sizeof(short) + sizeof(size_t) + filename.length() + 1;
     len = std::max((size_t)10, len);// for reasons, make this at least 10
-    char* buf = new char[len];
+    char* buf = new char[len]();
 
     *(short*)buf = htons((short)PacketType::ReadConfirmed);
     *(size_t*)(buf + sizeof(short)) = htonll(lines);
@@ -452,7 +452,7 @@ bool broadcast_read_confirm(const std::vector<int> & sockets, size_t lines, std:
 {
     size_t len = sizeof(short) + sizeof(size_t) + filename.length() + 1;
     len = std::max((size_t)10, len);// for reasons, make this at least 10
-    char* buf = new char[len];
+    char* buf = new char[len]();
 
     *(short*)buf = htons((short)PacketType::ReadConfirmed);
     *(size_t*)(buf + sizeof(short)) = htonll(lines);
@@ -476,7 +476,7 @@ bool send_get_full(int sock)
     
     size_t len = sizeof(short);
     len = std::max((size_t)10, len);// for reasons, make this at least 10
-    char* buf = new char[len];
+    char* buf = new char[len]();
 
     *(short*)buf = htons((short)PacketType::GetFull);
 
