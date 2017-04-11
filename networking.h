@@ -116,7 +116,7 @@ bool send_full_content(int sock, TextContainer<T>& text)
     std::pair<char*, size_t> ser = text.serialize();
 
     size_t len = sizeof(short) + ser.second;
-    char* buf = new char[len];
+    char* buf = new char[len]();
 
     *(short*)buf = htons((short)PacketType::FullContent);
     memcpy(buf + sizeof(short), ser.first, ser.second);
@@ -137,7 +137,7 @@ bool broadcast_full_content(const std::vector<int>& sockets, TextContainer<T>& t
     std::pair<char*, size_t> ser = text.serialize();
 
     size_t len = sizeof(short) + ser.second;
-    char* buf = new char[len];
+    char* buf = new char[len]();
 
     *(short*)buf = htons((short)PacketType::FullContent);
     memcpy(buf + sizeof(short), ser.first, ser.second);

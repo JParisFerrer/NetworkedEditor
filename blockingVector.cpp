@@ -19,6 +19,18 @@ void BlockingVector::insert(size_t line, size_t index, int input){
     std::vector<int>::iterator itHorz=this->data[line].begin();
     std::vector< std::vector<int> >::iterator itVert=this->data.begin();
 
+    if(line >= data.size())
+    {
+        fprintf(stderr, "[!!] bad line access! %lu >= %lu\n", line, data.size());
+        return;
+    }
+
+    if(index > data[line].size())
+    {
+        fprintf(stderr, "[!!] bad index access! %lu > %lu\n", index, data[line].size());
+        return;
+    }
+
     if (input == ENTER_KEY) {
         //this->data[line].insert(itHorz+index, input);
         this->data.insert(itVert+line+1, std::vector<int> ());
