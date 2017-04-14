@@ -193,6 +193,8 @@ int main(int argc, char** argv)
     // actually just use externs
     int ret = client::client_entrypoint();
 
+    sleep(1);
+
     // if we started the server, kill it
     // it should handle SIG_TERM to cleanup, then quit
     if(START_SERVER)

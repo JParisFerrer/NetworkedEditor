@@ -287,6 +287,10 @@ namespace server
 
         clients[client_idx].alive = false;
 
+        // try to save the results
+        fprintf(stderr, "Server trying to save autosave file on exit: 'autosave.txt'\n");
+        text.writeToFile("autosave.txt");
+
         return (void*)(long)client_fd;
     }
 
