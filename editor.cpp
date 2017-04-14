@@ -387,7 +387,6 @@ int main(int argc, char** argv)
         }
         else if (in == KEY_BACKSPACE)
         {
-            std::cerr<<"SHOOT!";
             int x, y;
             getyx(currWindow, y, x);
 

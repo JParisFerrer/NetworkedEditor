@@ -242,16 +242,19 @@ else{
 
         // insertPoint->line->buffer[index%CHARBUFFER]=input;
 
-        if(insertPoint->lineCapacity>index){
+        if(insertPoint->lineCapacity > index){
             //traverse to index
+            std::cerr << "if loop";
             int i=0;
             int buffI=index/CHARBUFFER;
             int buffOff=index%CHARBUFFER;
             Buffer* line=insertPoint->line;
             while(1){
+                std::cerr << "i loop";
                 if(i==buffI) {
                     int j=0;
                     while (1){
+                                std::cerr << "j loop";
                             if(j==buffOff){
                                 line->buffer[j]=input;
                                 break;
@@ -266,17 +269,21 @@ else{
         }
         else{
             // traverse to last buffer and make a new one
+            std::cerr << "else"; 
             int i=0;
             int buffI=index/CHARBUFFER;
             int buffOff=index%CHARBUFFER;
             Buffer* line=insertPoint->line;
             while(1){
+
+                std::cerr << "i loop";
                 if(i==buffI) {
 
                     int j=0;
                     while (1){
                             if(j==buffOff){
                                 line->buffer[j]=input;
+                                std::cerr << "j loop";
                                 break;
                             }
                             j++;
