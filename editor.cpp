@@ -677,7 +677,7 @@ namespace client
                     {
                         int x, y;
                         int maxx, maxy;
-                        getmaxyx(mainWindow, y, x);
+                        getmaxyx(mainWindow, maxy, maxx);
                         getyx(mainWindow, y, x);
                         numlines++;
                         if(numdisplaylines < maxy)
