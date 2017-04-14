@@ -178,7 +178,10 @@ namespace server
                 break;
             }
             else if (msg.first == nullptr)
-                continue;
+            {
+                break;
+                //continue;
+            }
 
             PacketType type = get_bytes_as<PacketType>(msg.first, 0);
 

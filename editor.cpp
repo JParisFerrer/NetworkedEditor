@@ -244,6 +244,7 @@ namespace client
 
         wresize(mainWindow, h - 1, w);
         wresize(commandWindow, 1, w);
+        mvwin(commandWindow, h-1, 0);
 
         if(h-1 < numdisplaylines)
         {
@@ -255,9 +256,10 @@ namespace client
            for(auto& v : data)
            v.resize(w, ' ');
            */
-        commands.resize(w, ' ');
+        if(w > 0)
+            commands.resize(w, ' ');
 
-        refresh_screen();
+        //refresh_screen();
 
         fprintf(stderr, "left function %s\n", __func__);
     }
@@ -349,7 +351,12 @@ namespace client
 
         use_extended_names(TRUE);
 
-        signal(SIGWINCH, resize_handler);
+        struct sigaction res;
+        res.sa_handler = resize_handler;
+        sigfillset(&res.sa_mask);
+        res.sa_flags = SA_RESTART;
+        sigaction(SIGWINCH, &res, NULL);
+        //signal(SIGWINCH, resize_handler);
         //signal(SIGINT, exit_handler);
 
         wrefresh(stdscr);
@@ -1101,6 +1108,10 @@ namespace client
                 }
 
                 move_win_rel(currWindow, 1, 0);
+            }
+            else if (in == 410)
+            {
+                // happen on resizes, appears to break stuff
             }
             else
             {
