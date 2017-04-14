@@ -8,27 +8,27 @@
 #include <chrono>
 #include "curses.h"
 #include "string"
-
 #define CHARBUFFER 4
-#define UNUSEDINT 99999
+#define BUFFERLEN 4
+#define UNUSEDINT 999999
 
 struct Location {
     size_t index;
     size_t line;
 };
 
-struct BufferList {
-    BufferList * next;
+struct Buffer {
+    Buffer * next;
     int * buffer;
 
-    BufferList(){
-        next=NULL;
+    Buffer(){
+        next=nullptr;
         buffer=new int[CHARBUFFER];
         for(int i = 0; i < CHARBUFFER; i++)
             buffer[i] = UNUSEDINT;
     }
 
-    BufferList(int* buf)
+    Buffer(int* buf)
     {
         next = nullptr;
         buffer = buf;
@@ -36,12 +36,23 @@ struct BufferList {
             buffer[i] = UNUSEDINT;
     }
 
-    ~BufferList(){
+    ~Buffer(){
         // jk we need this later
         //delete [] buffer;
     }
 };
-
+struct BufferList {
+    BufferList *next;
+    Buffer * line;
+    size_t lineLength;
+    size_t lineCapacity;
+    BufferList(){
+        next=nullptr;
+        line=nullptr;
+        lineLength=0;
+        lineCapacity=0;
+    }
+};
 class LockFreeList {
 public:
   /*Constructors*/
@@ -69,9 +80,9 @@ public:
 
 private:
 
-    std::atomic< int ** > data;
-    size_t dataLength;
-    size_t dataCapacity;
+    BufferList * data;
+    size_t dataLength; //CANT USE THIS IF WE WANNA BE TRULLY LOCK FREE
+
 
     //std::atomic<node<T>*> head;
     std::atomic< BufferList * > bufferPoolHead;
