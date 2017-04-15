@@ -141,7 +141,7 @@ else{
 
         makeLine(insertPoint);
 
-        insertIntoLine(insertPoint, index, input);
+        //insertIntoLine(insertPoint, index, input);
     }
     else{
         BufferList* insertPoint;
@@ -276,31 +276,95 @@ void LockFreeList::insertIntoLine(BufferList* line,size_t index, int c)
     int buffI=index/CHARBUFFER;
     int buffOff=index%CHARBUFFER;
 
-    Buffer* p = line->line;
-    Buffer* toinsert = line->line;
-
-    for(int i = 0; i < buffI; i++)
-    {
-            toinsert = toinsert->next;
-
-            if(toinsert == nullptr && i < buffI-1)
-            {
-                fprintf(stderr, "[%s] bad index %lu\n", __func__, index);
-                return;
+//    Buffer* p = line->line;
+    //std::cout<<index<<std::endl;
+    Buffer * currLine = line->line;
+    int currIndex=0;
+    Buffer * lastBuffer=nullptr;
+size_t i=0;
+    while(currLine!=NULL){
+        if (currLine->next==nullptr) {
+            lastBuffer=currLine;
+        }
+        for ( i = 0; i < BUFFERLEN; i++) {
+            if (currIndex==index) {
+                //std::cout<< "SHOULD WORK";
+                currLine->buffer[i]=c;
+                break;
             }
-            else if(toinsert == nullptr)
-            {
-                // allocate a new buffer
-                p->next = new Buffer();
-                toinsert = p->next;
-                line->lineCapacity += BUFFERLEN;
+            if(currLine->buffer[i]!=UNUSEDINT) {
+
+                currIndex++;
             }
 
-            p = toinsert;
+        }
+        if (currIndex==index) {
+        //    currLine->buffer[i]=c;
+            break;
+        }
+        currLine=currLine->next;
     }
-    // toinsert is the buffer to insert into
-    toinsert->buffer[buffOff] = c;
-    line->lineLength++;
+        // std::cout<< currIndex<<" "<<index<<std::endl;
+    if(currIndex<index){
+        Buffer* newBuffer =new Buffer();
+        newBuffer->buffer[0]=c;
+        lastBuffer->next=newBuffer;
+
+    }
+
+
+
+
+
+    //
+    // for(int i = 0; i < buffI; i++)
+    // {
+    //         toinsert = toinsert->next;
+    //
+    //         if(toinsert == nullptr && i < buffI-1)
+    //         {
+    //             fprintf(stderr, "[%s] bad index %lu\n", __func__, index);
+    //             return;
+    //         }
+    //         else if(toinsert == nullptr)
+    //         {
+    //             // allocate a new buffer
+    //             p->next = new Buffer();
+    //             toinsert = p->next;
+    //             line->lineCapacity += BUFFERLEN;
+    //         }
+    //
+    //         p = toinsert;
+    // }
+    //
+    //
+    // line->lineLength++;
+    //
+    // // check if current buffer has available spot already
+    // if(buffI > 0 && toinsert->buffer[buffOff - 1] == UNUSEDINT)
+    // {
+    //     // insert to the left
+    //     toinsert->buffer[buffOff - 1] = c;
+    //     //fprintf(stderr, "REUSE BUFFER");
+    // }
+    // else
+    // {
+    //     // make a new buffer
+    //     // copy everything on or to the right to new buffer
+    //     // fill in current buffer's right with UNUSEDINT and c
+    //
+    //     //fprintf(stderr, "NEW BUFFER");
+    //
+    //     Buffer* newbuf = new Buffer();
+    //     for (int i = buffOff, ii = 0; i < CHARBUFFER; i++, ii++)
+    //     {
+    //         newbuf->buffer[ii] = toinsert->buffer[i];
+    //     }
+    //     memset(toinsert->buffer + buffOff, UNUSEDINT, CHARBUFFER - buffOff);
+    //     toinsert->buffer[buffOff] = c;
+    //     newbuf->next = toinsert->next;
+    //     toinsert->next = newbuf;
+    // }
 }
 //returns false if it doesnt exist and true if it does
 bool LockFreeList::makeLine( BufferList*& currentLine) {
@@ -340,14 +404,66 @@ bool LockFreeList::getLine(size_t line, BufferList*& currentLine)
 
 size_t LockFreeList::line_width(size_t line) {
 
+    BufferList* buf;
+    bool ret = getLine(line, buf);
 
+    if(ret)
+    {
+        size_t width = 0;
 
+        Buffer * b = buf->line;
 
+        while(b != nullptr)
+        {
+            for(int i = 0; i < CHARBUFFER; i++)
+                if(b->buffer[i] != UNUSEDINT)
+                    width++;
+
+            b = b->next;
+        }
+
+        return width;
+    }
+    else
+    {
+        fprintf(stderr, "[%s] Bad line %lu \n", __func__, line);
+    }
 }
 
 
 
 void LockFreeList::remove(size_t line, size_t index){
+    //std::cout<<" remove";
+    BufferList* removePoint;
+    bool ret = getLine(line, removePoint);
+    if(!ret ) {
+        fprintf(stderr, "[!!] Bad line of %lu (max len: %lu) in %s\n", line, dataLength * CHARBUFFER, __func__);
+        return ;
+    }
+    int buffI=index/CHARBUFFER;
+    int buffOff=index%CHARBUFFER;
+    //std::cout<<"should remove";
+    Buffer * currLine=removePoint->line;
+    int currIndex=0;
+    while(currLine!=NULL){
+        for (size_t i = 0; i < BUFFERLEN; i++) {
+            if(currLine->buffer[i]!=UNUSEDINT) {
+                if (currIndex==index) {
+                    currLine->buffer[i]=UNUSEDINT;
+                    break;
+                }
+                currIndex++;
+            }
+        }
+        if (currIndex==index) {
+
+            break;
+        }
+        currLine=currLine->next;
+    }
+
+
+
 
 }
 void LockFreeList::move(size_t line, size_t index){
@@ -397,10 +513,20 @@ void LockFreeList::print(size_t line,size_t maxWidth){
     //     t = t->next;
     //     index++;
     // }
-    BufferList * list=head;
-    size_t index = line;
+    BufferList * list;
+    bool ret = getLine(line, list);
+
+    if(!ret)
+    {
+        fprintf(stderr, "%s bad line index %lu\n", __func__, line);
+        return;
+    }
+
+    //wclear(mainWindow);
+    size_t index = 0;
     while(list!=nullptr){
         wmove(mainWindow, index, 0);
+        //waddstr(mainWindow, "                                                                                                                                    ");
 
         Buffer* lineData=list->line;
         size_t printindex = 0;
@@ -409,7 +535,7 @@ void LockFreeList::print(size_t line,size_t maxWidth){
                 if (lineData->buffer[i]!=UNUSEDINT) {
                      mvwaddch(mainWindow, index, printindex, lineData->buffer[i]);
 
-                         printindex++;
+                    printindex++;
                 }
 
             }

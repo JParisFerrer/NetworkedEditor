@@ -16,6 +16,7 @@
 #define ENTER_KEY 13
 #define CTRL_Q 17
 #define DELETE_KEY 330
+#define MAC_BACK 127
 
 WINDOW* mainWindow;
 WINDOW* commandWindow;
@@ -136,7 +137,7 @@ void move_win_rel(WINDOW* win, int xoffs, int yoffs)
             capped_y = 0;
         }
 
-        capped_x = std::min((size_t)(x + xoffs), text.line_width(capped_y));
+        capped_x = std::min((ssize_t)(x + xoffs), (ssize_t)text.line_width(capped_y));
 
         if(capped_x < 0)
             capped_x = 0;
@@ -385,7 +386,7 @@ int main(int argc, char** argv)
         {
             currWindow = (currWindow == mainWindow ? commandWindow : mainWindow);
         }
-        else if (in == KEY_BACKSPACE)
+        else if (in == KEY_BACKSPACE || in==MAC_BACK)
         {
             int x, y;
             getyx(currWindow, y, x);
