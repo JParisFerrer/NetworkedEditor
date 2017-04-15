@@ -1,4 +1,4 @@
-//
+
 #include "lockfreelist.h"
 #include <iostream>
 
@@ -12,11 +12,11 @@ extern WINDOW* mainWindow;
 
 /*Constructors*/
 LockFreeList::LockFreeList() {
-    data=new BufferList();
+    head=new BufferList();
 
-    data->line= new Buffer();
-    data->lineCapacity+=BUFFERLEN;
-    data->lineLength=0;
+    head->line= new Buffer();
+    head->lineCapacity+=BUFFERLEN;
+    head->lineLength=0;
     dataLength = 1;
     //data->line->buffer[0];
 
@@ -131,219 +131,221 @@ else{
     // }
     if(input == ENTER_KEY)
     {
-        BufferList* insertPoint=data;
-        int i=0;
-        while(insertPoint!=NULL){
-            if(i==line) {
-                std::cout<<"LINE"<<i<<" ";
-                break;
-            }
-            insertPoint->next=insertPoint;
-            i++;
-        }
-        if(i!=line) {
+        BufferList* insertPoint;
+        bool ret = getLine(line, insertPoint);
+
+        if(!ret ) {
             fprintf(stderr, "[!!] Bad line of %lu (max len: %lu) in %s\n", line, dataLength * CHARBUFFER, __func__);
             return ;
         }
 
-        //INSERT THE newline
-        if(insertPoint->lineCapacity>index){
-            std::cout<<"INSERTING IF";
-            //traverse to index
-            int i=0;
-            int buffI=index/CHARBUFFER;
-            int buffOff=index%CHARBUFFER;
-            Buffer* line=insertPoint->line;
-            while(1){
-                if(i==buffI) {
-                    int j=0;
-                    while (1){
-                            if(j==buffOff){
-                                line->buffer[j]=input;
-                                break;
-                            }
-                            j++;
-                    }
-                    break;
-                }
-                i++;
-                line=line->next;
-            }
-        }
-        else{
-            std::cout<<"INSERTING eLSE";
-            // traverse to last buffer and make a new one
-            int i=0;
-            int buffI=index/CHARBUFFER;
-            int buffOff=index%CHARBUFFER;
-            Buffer* line=insertPoint->line;
-            while(1){
-                if(i==buffI) {
+        makeLine(insertPoint);
 
-                    int j=0;
-                    while (1){
-                            if(j==buffOff){
-                                line->buffer[j]=input;
-                                break;
-                            }
-                            j++;
-                    }
-                    break;
-                }
-                i++;
-                if(line->next==NULL){
-                    line->next=new Buffer();
-                }
-                line=line->next;
-
-            }
-        }
-        std::cout<<"INSERTING NL";
-
-        BufferList* newline=new BufferList();
-
-        newline->line= new Buffer();
-        newline->lineCapacity+=BUFFERLEN;
-        newline->lineLength=0;
-
-        insertPoint->next=newline;
-        std::cout<<"INSERTING NL"<<insertPoint<<std::endl;
-        return;
-        //dataLength++;
-        // we need to add that line
-        // LockFreeList* last = getList(line);
-        //
-        // if(last == nullptr)
-        // {
-        //     fprintf(stderr, "[!!] Missing line with index %lu in %s!\n", line, __func__);
-        //     return;
-        // }
-        // // else we good to make a new one
-        // LockFreeList* newlist = new LockFreeList();
-        // // make atomic
-        // last->next = newlist;
-
-        //newlist->insertInto(index, input);
+        insertIntoLine(insertPoint, index, input);
     }
-    else
-    {
+    else{
+        BufferList* insertPoint;
+        bool ret = getLine(line, insertPoint);
 
-        BufferList* insertPoint=data;
-        int i=0;
-        while(insertPoint!=NULL){
-            // std::cout<<"This shouldn't be printed"<<std::endl;
-            if(i==line) {break;}
-            insertPoint->next=insertPoint;
-            i++;
-        }
-        if(i!=line) {
-            std::cout<<"This shouldn't be printed"<<std::endl;
+        if(!ret ) {
+            fprintf(stderr, "[!!] Bad line of %lu (max len: %lu) in %s\n", line, dataLength * CHARBUFFER, __func__);
+            return ;
         }
 
-        // insertPoint->line->buffer[index%CHARBUFFER]=input;
-
-        if(insertPoint->lineCapacity > index){
-            //traverse to index
-            std::cerr << "if loop";
-            int i=0;
-            int buffI=index/CHARBUFFER;
-            int buffOff=index%CHARBUFFER;
-            Buffer* line=insertPoint->line;
-            while(1){
-                std::cerr << "i loop";
-                if(i==buffI) {
-                    int j=0;
-                    while (1){
-                                std::cerr << "j loop";
-                            if(j==buffOff){
-                                line->buffer[j]=input;
-                                break;
-                            }
-                            j++;
-                    }
-                    break;
-                }
-                i++;
-                line=line->next;
-            }
-        }
-        else{
-            // traverse to last buffer and make a new one
-            std::cerr << "else"; 
-            int i=0;
-            int buffI=index/CHARBUFFER;
-            int buffOff=index%CHARBUFFER;
-            Buffer* line=insertPoint->line;
-            while(1){
-
-                std::cerr << "i loop";
-                if(i==buffI) {
-
-                    int j=0;
-                    while (1){
-                            if(j==buffOff){
-                                line->buffer[j]=input;
-                                std::cerr << "j loop";
-                                break;
-                            }
-                            j++;
-                    }
-                    break;
-                }
-                i++;
-                if(line->next==NULL){
-                    line->next=new Buffer();
-                }
-                line=line->next;
-
-            }
-        }
+        insertIntoLine(insertPoint, index, input);
     }
-        // we need to insert into the given list
-    //     lineList->insertInto(index, input);
-    // }
-
-
-}
-
-void LockFreeList::insertInto(size_t index, int c)
-{
-    // // actually perform the insertion into buffers and stuff
-    // size_t bufindex = index / CHARBUFFER;
-    // size_t bufoffset = index % CHARBUFFER;
+    // std::cout<<"INSERTING NL";
     //
-    // if(bufindex > dataLength)
+    // BufferList* newline=new BufferList();
+    //
+    // newline->line= new Buffer();
+    // newline->lineCapacity+=BUFFERLEN;
+    // newline->lineLength=0;
+    //
+    // insertPoint->next=newline;
+    // std::cout<<"INSERTING NL"<<insertPoint<<std::endl;
+    // return;
+    //dataLength++;
+    // we need to add that line
+    // LockFreeList* last = getList(line);
+    //
+    // if(last == nullptr)
     // {
-    //     fprintf(stderr, "[!!] Bad index of %lu (max len: %lu) in %s\n", index, dataLength * CHARBUFFER, __func__);
+    //     fprintf(stderr, "[!!] Missing line with index %lu in %s!\n", line, __func__);
     //     return;
     // }
-    // // theoretically could be asking for something up to 4 chars after the end of the line, but we trust editor (a bit)
-    // if (bufindex == dataLength)
+    // // else we good to make a new one
+    // LockFreeList* newlist = new LockFreeList();
+    // // make atomic
+    // last->next = newlist;
+
+        //newlist->insertInto(index, input);
+    // }
+    // else
     // {
-    //     // need new buffer
-    //     if(dataLength < dataCapacity)
-    //     {
-    //         data[dataLength++] = getBuffer();
-    //     }
-    //     else
-    //     {
-    //         // make it bigger
-    //         int** newdata = new int*[dataCapacity * 2]();
-    //         for(size_t i = 0; i < dataCapacity; i++)
-    //             newdata[i] = data[i]; // shallow copy
-    //         delete [] data.load();     // proper code would do this after in case of errors
-    //         data = newdata;
-    //         dataCapacity = 2* dataCapacity;
     //
-    //         // then add a buffer
-    //         data[dataLength++] = getBuffer();
+    //     BufferList* insertPoint=data;
+    //     int i=0;
+    //     while(insertPoint!=NULL){
+    //         // std::cout<<"This shouldn't be printed"<<std::endl;
+    //         if(i==line) {break;}
+    //         insertPoint->next=insertPoint;
+    //         i++;
+    //     }
+    //     if(i!=line) {
+    //         std::cout<<"This shouldn't be printed"<<std::endl;
+    //     }
+    //
+    //     // insertPoint->line->buffer[index%CHARBUFFER]=input;
+    //
+    //     if(insertPoint->lineCapacity > index){
+    //         //traverse to index
+    //         std::cerr << "if loop";
+    //         int i=0;
+    //         int buffI=index/CHARBUFFER;
+    //         int buffOff=index%CHARBUFFER;
+    //         Buffer* line=insertPoint->line;
+    //         while(1){
+    //             std::cerr << "i loop";
+    //             if(i==buffI) {
+    //                 int j=0;
+    //                 while (1){
+    //                             std::cerr << "j loop";
+    //                         if(j==buffOff){
+    //                             line->buffer[j]=input;
+    //                             break;
+    //                         }
+    //                         j++;
+    //                 }
+    //                 break;
+    //             }
+    //             i++;
+    //             line=line->next;
+    //         }
+    //     }
+    //     else{
+    //         // traverse to last buffer and make a new one
+    //         std::cerr << "else";
+    //         int i=0;
+    //         int buffI=index/CHARBUFFER;
+    //         int buffOff=index%CHARBUFFER;
+    //         Buffer* line=insertPoint->line;
+    //         while(1){
+    //
+    //             std::cerr << "i loop";
+    //             if(i==buffI) {
+    //
+    //                 int j=0;
+    //                 while (1){
+    //                         if(j==buffOff){
+    //                             line->buffer[j]=input;
+    //                             std::cerr << "j loop";
+    //                             break;
+    //                         }
+    //                         j++;
+    //                 }
+    //                 break;
+    //             }
+    //             i++;
+    //             if(line->next==NULL){
+    //                 line->next=new Buffer();
+    //             }
+    //             line=line->next;
+    //
+    //         }
     //     }
     // }
-    // // now the buffer will exist and we can just write in there
-    // data[bufindex][bufoffset] = c;
+    //     // we need to insert into the given list
+    // //     lineList->insertInto(index, input);
+    // // }
+    //
+    // else{
+    //     BufferList*  currentLine=nullptr;
+    //     bool lineExisted = getLine(line,currentLine);
+    //     if(lineExisted==false){
+    //         fprintf(stderr, "[!!] Missing line with index %lu in %s!\n", line, __func_ );
+    //         return;
+    //     }
+    //     insertIntoLine(currentLine,index,c);
+    // }
+
+}
+
+void LockFreeList::insertIntoLine(BufferList* line,size_t index, int c)
+{
+    int buffI=index/CHARBUFFER;
+    int buffOff=index%CHARBUFFER;
+
+    Buffer* p = line->line;
+    Buffer* toinsert = line->line;
+
+    for(int i = 0; i < buffI; i++)
+    {
+            toinsert = toinsert->next;
+
+            if(toinsert == nullptr && i < buffI-1)
+            {
+                fprintf(stderr, "[%s] bad index %lu\n", __func__, index);
+                return;
+            }
+            else if(toinsert == nullptr)
+            {
+                // allocate a new buffer
+                p->next = new Buffer();
+                toinsert = p->next;
+                line->lineCapacity += BUFFERLEN;
+            }
+
+            p = toinsert;
+    }
+    // toinsert is the buffer to insert into
+    toinsert->buffer[buffOff] = c;
+    line->lineLength++;
+}
+//returns false if it doesnt exist and true if it does
+bool LockFreeList::makeLine( BufferList*& currentLine) {
+
+    BufferList* newline=new BufferList;
+    newline->line=new Buffer();
+    newline->lineCapacity += BUFFERLEN;
+    newline->lineLength = 0;
+    //
+    // BufferList* newline=new BufferList();
+    //
+    // newline->line= new Buffer();
+    // newline->lineCapacity+=BUFFERLEN;
+    // newline->lineLength=0;
+
+    currentLine->next=newline;
+}
+
+//returns false if it doesnt exist and sets currentline to before null
+    // and true if it does if current line is null that means head does not exist
+
+bool LockFreeList::getLine(size_t line, BufferList*& currentLine)
+{
+    BufferList* traverser=head;
+    if (traverser==nullptr) {
+        fprintf(stderr, "[%s] Head did not exist", __func__ );
+        return false;
+    }
+    int i=0;
+    while(traverser->next!=nullptr && (i!=line) ){
+        i++;
+        traverser=traverser->next;
+    }
+    currentLine=traverser;
+    return (i==line);
+}
+
+size_t LockFreeList::line_width(size_t line) {
+
+
 
 
 }
+
+
 
 void LockFreeList::remove(size_t line, size_t index){
 
@@ -395,7 +397,7 @@ void LockFreeList::print(size_t line,size_t maxWidth){
     //     t = t->next;
     //     index++;
     // }
-    BufferList * list=data;
+    BufferList * list=head;
     size_t index = line;
     while(list!=nullptr){
         wmove(mainWindow, index, 0);
@@ -429,30 +431,4 @@ void LockFreeList::printDebug(){
 
 void LockFreeList::writeToFileDebug(){
 
-}
-
-LockFreeList* LockFreeList::getList(size_t line)
-{
-    // LockFreeList* t = this;
-    //
-    // while(t)
-    // {
-    //     if(line == 0)
-    //         break;
-    //
-    //     t = t->next;
-    //     line--;
-    // }
-    //
-    // return t;
-}
-
-size_t LockFreeList::line_width(size_t y)
-{
-    // size_t bufindex = y / CHARBUFFER;
-    // size_t bufoffset = y % CHARBUFFER;
-    //
-    // LockFreeList* list = getList(y);
-    //
-    // return list->dataLength * CHARBUFFER;
 }

@@ -80,7 +80,7 @@ public:
 
 private:
 
-    BufferList * data;
+    BufferList * head;
     size_t dataLength; //CANT USE THIS IF WE WANNA BE TRULLY LOCK FREE
 
 
@@ -89,12 +89,11 @@ private:
 
     std::unordered_map< size_t, Location > locations;
 
-    LockFreeList* next;
+    bool makeLine( BufferList*& currentLine);
 
+    bool getLine(size_t line, BufferList *& currentLine);
 
-    LockFreeList* getList(size_t line);
-
-    void insertInto(size_t index, int c);
+    void insertIntoLine(BufferList* line, size_t index, int c);
 
     int* getBuffer();
 };
