@@ -102,6 +102,7 @@ bool send_remove(int sock, size_t y, size_t x);
 bool send_write(int sock, std::string filename);
 
 bool send_write_confirm(int sock, std::string filename);
+bool broadcast_write_confirm(std::vector<int> sockets, std::string filename);
 
 bool send_read(int sock, std::string filename);
 

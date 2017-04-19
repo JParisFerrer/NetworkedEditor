@@ -414,6 +414,28 @@ bool send_write_confirm(int sock, std::string filename)
     return ret;
 }
 
+bool broadcast_write_confirm(std::vector<int> sockets, std::string filename)
+{
+    size_t len = sizeof(short) + filename.length() + 1;
+    len = std::max((size_t)10, len);// for reasons, make this at least 10
+    char* buf = new char[len]();
+
+    *(short*)buf = htons((short)PacketType::WriteConfirmed);
+    memcpy(buf + sizeof(short), filename.c_str(), filename.length()+1);
+
+    for(int sock : sockets)
+    {
+        bool ret = send_message(sock, buf, len);
+
+        if(!ret)
+            fprintf(stderr, "[!!!] [%s] bad return value for client with sock %d\n", __func__, sock);
+    }
+
+    delete [] buf;
+
+    return true;
+}
+
 bool send_read(int sock, std::string filename)
 {
     size_t len = sizeof(short) + filename.length() + 1;

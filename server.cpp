@@ -327,7 +327,10 @@ namespace server
                 return 5;
             }
 
+            clock.lock();
             clients.push_back(Client(client_fd));
+            clock.unlock();
+
             threads.push_back(pthread_t());
             pthread_create(&threads.back(), nullptr, thread_routine, (void*)(long)(clients.size()-1));
         }
