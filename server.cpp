@@ -135,7 +135,7 @@ namespace server
         {
             if(c.id != ignore && c.alive)
             {
-                //fprintf(stderr, "Forwarded message from %d to %d (sock: %d)\n", ignore, c.id, c.socket);
+                fprintf(stderr, "Forwarded message from %d to %d (sock: %d)\n", ignore, c.id, c.socket);
                 send_message(c.socket, msg.first, msg.second);
             }
         }
@@ -146,8 +146,11 @@ namespace server
     {
         std::lock_guard<std::mutex> m(clock);
 
+        fprintf(stderr, "Broadcasting to: \n");
+
         for (Client& c : clients)
         {
+            fprintf(stderr, "\t id: %d, alive: %s, sock: %d\n", c.id, (c.alive ? "yes": " no"), c.socket);
             if(c.alive)
                 send_message(c.socket, buf, len);
         }
