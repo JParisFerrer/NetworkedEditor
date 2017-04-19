@@ -248,7 +248,8 @@ namespace server
 
                     text.writeToFile(filename);
 
-                    send_write_confirm(client_fd, filename);
+                    //send_write_confirm(client_fd, filename);
+                    broadcast_write_confirm(get_socket_list(), filename);
 
                     break;
                 }
