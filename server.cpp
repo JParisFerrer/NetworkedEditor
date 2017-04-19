@@ -135,7 +135,7 @@ namespace server
         {
             if(c.id != ignore && c.alive)
             {
-                fprintf(stderr, "Forwarded message from %d to %d (sock: %d)\n", ignore, c.id, c.socket);
+                //fprintf(stderr, "Forwarded message from %d to %d (sock: %d)\n", ignore, c.id, c.socket);
                 send_message(c.socket, msg.first, msg.second);
             }
         }
