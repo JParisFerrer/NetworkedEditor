@@ -12,7 +12,7 @@ namespace server
     TextContainer<BlockingVector> text;
 
     std::vector<Client> clients;
-
+    std::mutex clock;
     int Client::nextid = 0;
 
     void sigterm_handler(int sig)
@@ -129,6 +129,8 @@ namespace server
 
     void forward_message(std::pair<char*, size_t> msg, int ignore)
     {
+        std::lock_guard<std::mutex> m(clock);
+
         for (Client& c : clients)
         {
             if(c.id != ignore && c.alive)
@@ -137,10 +139,13 @@ namespace server
                 send_message(c.socket, msg.first, msg.second);
             }
         }
+
     }
 
     void broadcast_message(char* buf, size_t len)
     {
+        std::lock_guard<std::mutex> m(clock);
+
         for (Client& c : clients)
         {
             if(c.alive)
