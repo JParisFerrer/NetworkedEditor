@@ -302,10 +302,15 @@ size_t i=0;
         //    currLine->buffer[i]=c;
             break;
         }
+        buffI ++;
         currLine=currLine->next;
     }
         // std::cout<< currIndex<<" "<<index<<std::endl;
-    if(currIndex<index){
+    //fprintf(stderr, "curr: %d, want: %lu\n", currIndex, index);
+    if(currIndex <= index && i == 4){
+        //fprintf(stderr, "NEW BUFF\n");
+        //fprintf(stdout, "NEW BUFF\n");
+
         Buffer* newBuffer =new Buffer();
         newBuffer->buffer[0]=c;
         lastBuffer->next=newBuffer;
