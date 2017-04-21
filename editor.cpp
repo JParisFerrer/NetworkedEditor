@@ -229,6 +229,9 @@ int main(int argc, char** argv)
     //waddstr(mainWindow, "hello world!");
     //waddstr(commandWindow, "hello world!");
 
+    FILE* f = fopen("clogerr.txt", "w+");
+    dup2(fileno(f), 2);
+
     wmove(commandWindow, 0, 0);
     //box(commandWindow, 0, 0);
     //box(mainWindow, 0, 0);

@@ -7,7 +7,7 @@
 #include <atomic>
 #include <chrono>
 #include "curses.h"
-#include "string"
+#include <cstring>
 #define CHARBUFFER 4
 #define BUFFERLEN 4
 #define UNUSEDINT 999999

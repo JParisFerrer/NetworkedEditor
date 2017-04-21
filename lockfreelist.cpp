@@ -288,9 +288,11 @@ void LockFreeList::insertIntoLine(BufferList* line,size_t index, int c)
             lastBuffer=currLine;
         }
         for ( i = 0; i < BUFFERLEN; i++) {
+            fprintf(stderr, "i:%lu curr:%d\n", i, currIndex);
             if (currIndex==index) {
                 //std::cout<< "SHOULD WORK";
-                currLine->buffer[i]=c;
+                //currLine->buffer[i]=c;
+                buffOff = i;
                 inserted = true;
                 break;
             }
@@ -302,13 +304,16 @@ void LockFreeList::insertIntoLine(BufferList* line,size_t index, int c)
         }
         if (inserted) {
         //    currLine->buffer[i]=c;
+            // we exited the for, not break
             break;
         }
         buffI ++;
         currLine=currLine->next;
     }
         // std::cout<< currIndex<<" "<<index<<std::endl;
-    //fprintf(stderr, "curr: %d, want: %lu\n", currIndex, index);
+    fprintf(stderr, "curr: %d, want: %lu, inserted:%d\n", currIndex, index, inserted);
+
+    // if we hit the end of the line, add it there
     if(!inserted){
         //fprintf(stderr, "NEW BUFF\n");
         //fprintf(stdout, "NEW BUFF\n");
@@ -318,6 +323,55 @@ void LockFreeList::insertIntoLine(BufferList* line,size_t index, int c)
         lastBuffer->next=newBuffer;
 
     }
+    else
+    {
+        // we have buffI and buffOff correct
+
+
+        // check if current buffer has available spot already
+        if(currLine->buffer[buffOff] == UNUSEDINT)
+        {
+            currLine->buffer[buffOff] = c;
+        }
+        else if(buffOff > 0 && currLine->buffer[buffOff - 1] == UNUSEDINT)
+        {
+            // insert to the left
+            currLine->buffer[buffOff - 1] = c;
+            //fprintf(stderr, "REUSE BUFFER");
+        }
+        else
+        {
+            // make a new buffer
+            // copy everything on or to the right to new buffer
+            // fill in current buffer's right with UNUSEDINT and c
+
+            //fprintf(stderr, "NEW BUFFER");
+
+            Buffer* newbuf = new Buffer();
+            for (int i = buffOff, ii = 0; i < BUFFERLEN; i++, ii++)
+            {
+                fprintf(stderr, "added %c from %d->%d\n", currLine->buffer[i], i, ii);
+                newbuf->buffer[ii] = currLine->buffer[i];
+            }
+
+            fprintf(stderr, "memset from %d for len %d\n", buffOff, BUFFERLEN - buffOff);
+            for( int i = buffOff; i < BUFFERLEN; i++)
+                currLine->buffer[i] = UNUSEDINT;
+            //memset(currLine->buffer + buffOff, UNUSEDINT, BUFFERLEN - buffOff);
+            currLine->buffer[buffOff] = c;
+            newbuf->next = currLine->next;
+            currLine->next = newbuf;
+
+            Buffer* p = line->line;
+            while(p != nullptr)
+            {
+                fprintf(stderr, "%p, ", p);
+                p = p->next;
+            }
+        }
+    }
+    
+
 
 
 
