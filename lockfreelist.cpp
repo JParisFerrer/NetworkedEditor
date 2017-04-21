@@ -143,6 +143,52 @@ else{
         
 
         // copy over rest of line
+        size_t in = 0;
+        Buffer* t = insertPoint->line;
+        int oi = 0;
+        int i;
+        bool found = false;
+        // get to the correct index
+        while(1)
+        {
+            for (i = 0; i < BUFFERLEN; i++)
+            {
+                if(oi == index)
+                {
+                    found = true;
+                    break;
+                }
+                if(t->buffer[i] != UNUSEDINT)
+                    oi ++;
+            }
+
+            if(found)
+                break;
+
+            t = t->next;
+
+            if(!t)
+            {
+                // nothing to copy
+                return;
+            }
+        }
+
+        while(t)
+        {
+            for ( i = i; i < BUFFERLEN; i++)
+            {
+                if(t->buffer[i] != UNUSEDINT)
+                {
+                    insertIntoLine(insertPoint->next, in++, t->buffer[i]);
+                    t->buffer[i] = UNUSEDINT;
+                }
+
+            }
+            i = 0;
+
+            t = t->next;
+        }
 
         //insertIntoLine(insertPoint, index, input);
     }
@@ -444,6 +490,7 @@ bool LockFreeList::makeLine( BufferList*& currentLine) {
     // newline->lineCapacity+=BUFFERLEN;
     // newline->lineLength=0;
 
+    newline->next = currentLine->next;
     currentLine->next=newline;
 }
 
