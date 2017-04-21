@@ -241,7 +241,7 @@ int main(int argc, char** argv)
 
     //delwin(stdscr);
 
-    currWindow = commandWindow;
+    currWindow = mainWindow;
 
     char s[2];
     s[1] = '\0';

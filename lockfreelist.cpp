@@ -140,6 +140,9 @@ else{
         }
 
         makeLine(insertPoint);
+        
+
+        // copy over rest of line
 
         //insertIntoLine(insertPoint, index, input);
     }
