@@ -546,37 +546,84 @@ size_t LockFreeList::line_width(size_t line) {
 void LockFreeList::remove(size_t line, size_t index){
     //std::cout<<" remove";
     BufferList* removePoint;
-    bool ret = getLine(line, removePoint);
-    if(!ret ) {
-        fprintf(stderr, "[!!] Bad line of %lu (max len: %lu) in %s\n", line, dataLength * CHARBUFFER, __func__);
-        return ;
-    }
-    //std::cout<<"should remove";
-    Buffer * currLine=removePoint->line;
-    int currIndex=0;
-    bool removed = false;
-    while(currLine!=NULL)
+
+    if(index == (size_t)-1)
     {
-        for (size_t i = 0; i < BUFFERLEN; i++) 
+        if(line == 0)
+            return;
+
+        if(line_width(line) > 0)
         {
-            if(currLine->buffer[i]!=UNUSEDINT) 
+            bool ret = getLine(line, removePoint);
+            BufferList* before;
+            getLine(line-1, before);
+
+            // copy over the chars
+            size_t in = line_width(line-1);
+
+            Buffer* t = removePoint->line;
+
+            while(t)
             {
-                if (currIndex==index) 
+                for(int i = 0; i < BUFFERLEN; i++)
                 {
-                    currLine->buffer[i]=UNUSEDINT;
-                    removed = true;
-                    break;
+                    if(t->buffer[i] != UNUSEDINT)
+                    {
+                        insertIntoLine(before, in, t->buffer[i]);
+                        in++;
+                    }
                 }
-                currIndex++;
+
+                t = t->next;
             }
 
-            if(removed) break;
+            before->next = removePoint->next;
         }
-        if (removed) 
-            break;
-        currLine=currLine->next;
+        else
+        {
+            // just remove it
+            bool ret = getLine(line, removePoint);
+            BufferList* before;
+            getLine(line -1, before);
+
+            before->next = removePoint->next;
+        }
     }
 
+    else
+    {
+        bool ret = getLine(line, removePoint);
+        if(!ret ) {
+            fprintf(stderr, "[!!] Bad line of %lu (max len: %lu) in %s\n", line, dataLength * CHARBUFFER, __func__);
+            return ;
+        }
+        //std::cout<<"should remove";
+        Buffer * currLine=removePoint->line;
+        int currIndex=0;
+        bool removed = false;
+        while(currLine!=NULL)
+        {
+            for (size_t i = 0; i < BUFFERLEN; i++) 
+            {
+                if(currLine->buffer[i]!=UNUSEDINT) 
+                {
+                    if (currIndex==index) 
+                    {
+                        currLine->buffer[i]=UNUSEDINT;
+                        removed = true;
+                        break;
+                    }
+                    currIndex++;
+                }
+
+                if(removed) break;
+            }
+            if (removed) 
+                break;
+            currLine=currLine->next;
+        }
+
+    }
 }
 void LockFreeList::move(size_t line, size_t index){
     // update the line and index object variables
