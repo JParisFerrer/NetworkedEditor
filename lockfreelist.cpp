@@ -447,30 +447,31 @@ void LockFreeList::remove(size_t line, size_t index){
         fprintf(stderr, "[!!] Bad line of %lu (max len: %lu) in %s\n", line, dataLength * CHARBUFFER, __func__);
         return ;
     }
-    int buffI=index/CHARBUFFER;
-    int buffOff=index%CHARBUFFER;
     //std::cout<<"should remove";
     Buffer * currLine=removePoint->line;
     int currIndex=0;
-    while(currLine!=NULL){
-        for (size_t i = 0; i < BUFFERLEN; i++) {
-            if(currLine->buffer[i]!=UNUSEDINT) {
-                if (currIndex==index) {
+    bool removed = false;
+    while(currLine!=NULL)
+    {
+        for (size_t i = 0; i < BUFFERLEN; i++) 
+        {
+            if(currLine->buffer[i]!=UNUSEDINT) 
+            {
+                if (currIndex==index) 
+                {
                     currLine->buffer[i]=UNUSEDINT;
+                    removed = true;
                     break;
                 }
                 currIndex++;
             }
-        }
-        if (currIndex==index) {
 
-            break;
+            if(removed) break;
         }
+        if (removed) 
+            break;
         currLine=currLine->next;
     }
-
-
-
 
 }
 void LockFreeList::move(size_t line, size_t index){
@@ -529,7 +530,7 @@ void LockFreeList::print(size_t line,size_t maxWidth){
         return;
     }
 
-    //wclear(mainWindow);
+    wclear(mainWindow);
     size_t index = 0;
     while(list!=nullptr){
         wmove(mainWindow, index, 0);
