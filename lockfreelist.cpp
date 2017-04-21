@@ -281,7 +281,8 @@ void LockFreeList::insertIntoLine(BufferList* line,size_t index, int c)
     Buffer * currLine = line->line;
     int currIndex=0;
     Buffer * lastBuffer=nullptr;
-size_t i=0;
+    size_t i=0;
+    bool inserted = false;
     while(currLine!=NULL){
         if (currLine->next==nullptr) {
             lastBuffer=currLine;
@@ -290,6 +291,7 @@ size_t i=0;
             if (currIndex==index) {
                 //std::cout<< "SHOULD WORK";
                 currLine->buffer[i]=c;
+                inserted = true;
                 break;
             }
             if(currLine->buffer[i]!=UNUSEDINT) {
@@ -298,7 +300,7 @@ size_t i=0;
             }
 
         }
-        if (currIndex==index) {
+        if (inserted) {
         //    currLine->buffer[i]=c;
             break;
         }
@@ -307,7 +309,7 @@ size_t i=0;
     }
         // std::cout<< currIndex<<" "<<index<<std::endl;
     //fprintf(stderr, "curr: %d, want: %lu\n", currIndex, index);
-    if(currIndex <= index && i == 4){
+    if(!inserted){
         //fprintf(stderr, "NEW BUFF\n");
         //fprintf(stdout, "NEW BUFF\n");
 
