@@ -206,6 +206,8 @@ void BlockingVector::printColored(WINDOW* win, std::string text)
         }
     }
 
+    fprintf(stderr, "\n");
+
     // print everything
 
 }
