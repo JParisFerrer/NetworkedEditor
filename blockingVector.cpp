@@ -230,8 +230,9 @@ void BlockingVector::printColored(WINDOW* win, std::string text)
                     fprintf(stderr, "got match '%s' at index %d, pos %ld and len %ld\n", m[i].str().c_str(), i, m.position(i), m.length(i));
 
                     // take off the edges because it has the boundary included
-                    std::string match = trim(m[i].str());
-                    for (int po = m.position(i) + 1, le = match.length(i), in = po; in < po + le; in++)
+                    std::string match = m[i].str();
+                    trim(match);
+                    for (int po = m.position(i) + 1, le = match.length(), in = po; in < po + le; in++)
                     {
                         if(in == po && match[0] == m[i].str()[0])
                             ctext[in] |= COLOR_PAIR(r.second);
