@@ -5,6 +5,31 @@
 
 extern WINDOW* mainWindow;
 
+
+
+// trim from start
+static inline std::string &ltrim(std::string &s) {
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(),
+            std::not1(std::ptr_fun<int, int>(std::isspace))));
+    return s;
+}
+
+// trim from end
+static inline std::string &rtrim(std::string &s) {
+    s.erase(std::find_if(s.rbegin(), s.rend(),
+            std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
+    return s;
+}
+
+// trim from both ends
+static inline std::string &trim(std::string &s) {
+    return ltrim(rtrim(s));
+}
+
+
+
+
+
 /*Constructors*/
 BlockingVector::BlockingVector(){
     data.push_back(std::vector<int> ());
@@ -205,9 +230,11 @@ void BlockingVector::printColored(WINDOW* win, std::string text)
                     fprintf(stderr, "got match '%s' at index %d, pos %ld and len %ld\n", m[i].str().c_str(), i, m.position(i), m.length(i));
 
                     // take off the edges because it has the boundary included
-                    for (int po = m.position(i) + 1, le = m.length(i) -1, in = po; in < po + le; in++)
+                    std::string match = trim(m[i].str());
+                    for (int po = m.position(i) + 1, le = match.length(i), in = po; in < po + le; in++)
                     {
-                        ctext[in] |= COLOR_PAIR(r.second);
+                        if(in == po && match[0] == m[i].str()[0])
+                            ctext[in] |= COLOR_PAIR(r.second);
                     }
                 }
             }
