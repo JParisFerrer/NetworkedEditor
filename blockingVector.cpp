@@ -178,14 +178,14 @@ void BlockingVector::printColored(WINDOW* win, std::string text)
     //std::lock_guard<std::mutex> lock(vectorLock);
     // set up colors
     start_color();
-    init_pair(0, COLOR_BLUE, COLOR_BLACK);
     init_pair(1, COLOR_YELLOW, COLOR_BLACK);
     init_pair(2, COLOR_CYAN, COLOR_BLACK);
+    init_pair(3, COLOR_BLUE, COLOR_BLACK);
 
     std::vector<int> ctext(text.begin(), text.end());
 
     // loop over regex matches
-    const std::vector<std::pair<std::string, int>> keywords = {std::make_pair("\\sfor\\b", 0), std::make_pair("\\swhile\\b", 0), std::make_pair("[\\d]+", 1), std::make_pair("\\sint\\s", 2)};
+    const std::vector<std::pair<std::string, int>> keywords = {std::make_pair("\\sfor\\b", 3), std::make_pair("\\swhile\\b", 3), std::make_pair("[\\d]+", 1), std::make_pair("\\sint\\s", 2)};
 
     for(auto r : keywords)
     {
