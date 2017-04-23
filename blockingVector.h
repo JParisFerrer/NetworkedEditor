@@ -7,6 +7,8 @@
 #include <fstream>
 #include <iostream>
 #include <mutex>
+#include <regex>
+#include <utility>
 #include "networking.h"
 
 
@@ -25,6 +27,7 @@ class BlockingVector {
         void writeToFile(std::string fileName);
         size_t readFromFile(std::string fileName);
         void print(WINDOW* win, size_t line,size_t maxWidth);
+        void printColored(WINDOW* win, std::string text);
 
         std::pair<char*, size_t> serialize();
         size_t deserialize(char* buf, size_t len);

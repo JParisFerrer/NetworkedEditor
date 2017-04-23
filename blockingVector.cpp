@@ -152,16 +152,62 @@ void BlockingVector::print(WINDOW* win, size_t line,size_t maxWidth){
     std::lock_guard<std::mutex> lock(vectorLock);
 
     size_t index = 0;
+    std::vector<int> chars;
+
+    wclear(win);
+
     for(size_t i = line; i < this->data.size(); i++, index++){
         // clear screen
-        wmove(win, index, 0);
-        waddstr(win, "                                                                                                                                                 ");   // clear line
+        //wmove(win, index, 0);
+        //waddstr(win, "                                                                                                                                                 ");   // clear line
         for(size_t j = 0; j < std::min(this->data[i].size(), maxWidth); j++){
             //std::cout << (char)data[i][j];
-            mvwaddch(win, index, j, this->data[i][j]);
+            //mvwaddch(win, index, j, this->data[i][j]);
+            chars.push_back(this->data[i][j]);
         }
         //std::cout<<std::endl;
+        chars.push_back(ENTER_KEY);
     }
+
+    std::string s (chars.begin(), chars.end());
+    printColored(win, s);
+}
+
+void BlockingVector::printColored(WINDOW* win, std::string text)
+{
+    //std::lock_guard<std::mutex> lock(vectorLock);
+    // set up colors
+    start_color();
+    init_pair(0, COLOR_BLUE, COLOR_BLACK);
+    init_pair(1, COLOR_YELLOW, COLOR_BLACK);
+    init_pair(2, COLOR_CYAN, COLOR_BLACK);
+
+    std::vector<int> ctext(text.begin(), text.end());
+
+    // loop over regex matches
+    const std::vector<std::pair<std::string, int>> keywords = {std::make_pair("\\sfor\\b", 0), std::make_pair("\\swhile\\b", 0), std::make_pair("[\\d]+", 1), std::make_pair("\\sint\\s", 2)};
+
+    for(auto r : keywords)
+    {
+        std::smatch m;
+        if(std::regex_search(text, m, std::regex(r.first)))
+        {
+            // got a match
+            for(int i = 0; i < m.size(); i++)
+            {
+                // i is the index into m of our match
+                // m.position(i) is index into text that the match starts at
+                // m.length(i) is length of the match
+
+                fprintf(stderr, "got match '%s' at index %d, pos %ld and len %ld\n", m[i].str().c_str(), i, m.position(i), m.length(i));
+
+
+            }
+        }
+    }
+
+    // print everything
+
 }
 
 std::pair<char*, size_t> BlockingVector::serialize()
