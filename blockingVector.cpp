@@ -206,7 +206,7 @@ void BlockingVector::printColored(WINDOW* win, std::string text)
 
                     for (int po = m.position(i), le = m.length(i), in = po; in < po + le; in++)
                     {
-                        ctext[in] |= r.second;
+                        ctext[in] |= COLOR_PAIR(r.second);
                     }
                 }
             }
