@@ -201,7 +201,10 @@ void BlockingVector::printColored(WINDOW* win, std::string text)
 
                 fprintf(stderr, "got match '%s' at index %d, pos %ld and len %ld\n", m[i].str().c_str(), i, m.position(i), m.length(i));
 
-
+                for (int po = m.position(i), le = m.length(i), in = po; in < po + le; in++)
+                {
+                    ctext[in] |= r.second;
+                }
             }
         }
     }
@@ -209,6 +212,21 @@ void BlockingVector::printColored(WINDOW* win, std::string text)
     fprintf(stderr, "\n");
 
     // print everything
+    size_t y = 0;
+    size_t x = 0;
+    for(int ch : ctext)
+    {
+        if(ch == ENTER_KEY)
+        {
+            y++;
+            x = 0;
+
+            continue;
+        }
+
+        mvwaddch(win, y, x, ch);
+        x++;
+    }
 
 }
 
