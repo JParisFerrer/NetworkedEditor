@@ -189,24 +189,34 @@ void BlockingVector::printColored(WINDOW* win, std::string text)
 
     for(auto r : keywords)
     {
+        fprintf(stderr, "started matching\n");
         std::smatch m;
-        if(std::regex_search(text, m, std::regex(r.first)))
+        try
         {
-            // got a match
-            for(int i = 0; i < m.size(); i++)
+            if(std::regex_search(text, m, std::regex(r.first)))
             {
-                // i is the index into m of our match
-                // m.position(i) is index into text that the match starts at
-                // m.length(i) is length of the match
-
-                fprintf(stderr, "got match '%s' at index %d, pos %ld and len %ld\n", m[i].str().c_str(), i, m.position(i), m.length(i));
-
-                for (int po = m.position(i), le = m.length(i), in = po; in < po + le; in++)
+                // got a match
+                for(int i = 0; i < m.size(); i++)
                 {
-                    ctext[in] |= r.second;
+                    // i is the index into m of our match
+                    // m.position(i) is index into text that the match starts at
+                    // m.length(i) is length of the match
+
+                    fprintf(stderr, "got match '%s' at index %d, pos %ld and len %ld\n", m[i].str().c_str(), i, m.position(i), m.length(i));
+
+                    for (int po = m.position(i), le = m.length(i), in = po; in < po + le; in++)
+                    {
+                        ctext[in] |= r.second;
+                    }
                 }
             }
         }
+        catch (const std::exception& e)
+        {
+            std::cerr << e.what() << std::endl;
+        }
+
+        fprintf(stderr, "done matching\n");
     }
 
     fprintf(stderr, "\n");
