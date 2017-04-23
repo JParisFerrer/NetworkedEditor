@@ -1,8 +1,10 @@
 *.o
 *.swp
 *.swo
+*.swn
 *~
 a.out
 .DS_Store
 editor
 *.txt
+vgcore*

@@ -38,8 +38,20 @@ size_t TextContainer<T>::readFromFile(std::string fileName){
 }
 
 template <typename T>
-void TextContainer<T>::print(size_t line,size_t maxWidth){
-    this->container.print(line, maxWidth);
+void TextContainer<T>::print(WINDOW* win, size_t line,size_t maxWidth){
+    this->container.print(win, line, maxWidth);
+}
+
+template <typename T>
+std::pair<char*, size_t> TextContainer<T>::serialize()
+{
+    return this->container.serialize();
+}
+
+template <typename T>
+size_t TextContainer<T>::deserialize(char* buf, size_t len)
+{
+    return this->container.deserialize(buf, len);
 }
 
 /*debugging utilties*/

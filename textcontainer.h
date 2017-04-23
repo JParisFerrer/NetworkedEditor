@@ -2,6 +2,10 @@
 #ifndef _TEXTCONTAINER_H_
 #define _TEXTCONTAINER_H_
 
+#include <curses.h>
+
+#include <utility>
+
 template <typename T>
 class TextContainer {
     public:
@@ -17,7 +21,10 @@ class TextContainer {
 
         void writeToFile(std::string fileName);
         size_t readFromFile(std::string fileName);
-        void print(size_t line,size_t maxWidth);
+        void print(WINDOW* win, size_t line,size_t maxWidth);
+
+        std::pair<char*, size_t> serialize();
+        size_t deserialize(char* buf, size_t len);
 
         /*debugging utilties*/
 
