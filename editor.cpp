@@ -354,7 +354,7 @@ namespace client
         struct sigaction res;
         res.sa_handler = resize_handler;
         sigfillset(&res.sa_mask);
-        res.sa_flags = 0 && SA_RESTART;
+        res.sa_flags = 0 & SA_RESTART;
         sigaction(SIGWINCH, &res, NULL);
         //signal(SIGWINCH, resize_handler);
         //signal(SIGINT, exit_handler);
@@ -1140,7 +1140,9 @@ END:
         SHUTDOWN_NETWORK = true;
 
         // force that persistent thread to die
-        close(SERVER_SOCKET);
+        int cret = close(SERVER_SOCKET);
+        if(cret)
+            perror("close");
 
         thread_messageHandler.join();
         thread_getFull.join();
