@@ -642,6 +642,7 @@ namespace client
 
             case PacketType::FullContent:
                 {
+                    fprintf(stderr, "Got full content\n");
                     // rest of it is serialized thing
                     size_t lines = text.deserialize(msg.first + sizeof(short), msg.second - sizeof(short));
 

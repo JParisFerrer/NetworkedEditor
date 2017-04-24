@@ -514,6 +514,8 @@ bool send_get_full(int sock)
 
     delete [] buf;
 
+    fprintf(stderr, "Sent a getfull\n");
+
     return ret;
 
 }
