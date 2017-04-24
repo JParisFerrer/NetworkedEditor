@@ -224,11 +224,20 @@ namespace client
         // force that persistent thread to die
         close(SERVER_SOCKET);
 
+        // WHY WON'T YOU DIE
+        raise(SIGUSR1);
+
         thread_messageHandler.join();
         thread_getFull.join();
 
 
         exit(1);
+    }
+
+    void sigusr_handler(int sigusr)
+    {
+        // do nothing, just break out of recv
+        fprintf(stderr, "WHY WONT U DIE\n");
     }
 
     void resize_handler(int sigwinch)
@@ -356,6 +365,11 @@ namespace client
         sigfillset(&res.sa_mask);
         res.sa_flags = SA_RESTART;
         sigaction(SIGWINCH, &res, NULL);
+        
+        res.sa_handler = sigusr_handler;
+        sigemptyset(&res.sa_mask);
+        res.sa_flags = 0;
+        sigaction(SIGUSR1, &res, NULL);
         //signal(SIGWINCH, resize_handler);
         //signal(SIGINT, exit_handler);
 
@@ -488,6 +502,9 @@ namespace client
                             // force that persistent thread to die
                             close(SERVER_SOCKET);
 
+                            // WHY WON'T YOU DIE
+                            raise(SIGUSR1);
+
                             thread_messageHandler.join();
                             thread_getFull.join();
 
@@ -578,6 +595,9 @@ namespace client
 
                 // force that persistent thread to die
                 close(SERVER_SOCKET);
+
+                // WHY WON'T YOU DIE
+                raise(SIGUSR1);
 
                 thread_messageHandler.join();
                 thread_getFull.join();
@@ -1155,6 +1175,9 @@ END:
 
         // force that persistent thread to die
         close(SERVER_SOCKET);
+
+        // WHY WON'T YOU DIE
+        raise(SIGUSR1);
 
         thread_messageHandler.join();
         thread_getFull.join();
