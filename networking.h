@@ -161,6 +161,6 @@ bool broadcast_full_content(const std::vector<int>& sockets, TextContainer<T>& t
 
 }
 
-void broadcast_disconnect(const std::vector<int>& sockets);
+bool broadcast_disconnect(const std::vector<int>& sockets);
 
 #endif

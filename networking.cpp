@@ -518,7 +518,7 @@ bool send_get_full(int sock)
 
 }
 
-void broadcast_disconnect(const std::vector<int>& sockets)
+bool broadcast_disconnect(const std::vector<int>& sockets)
 {
     std::string msg = "Client disconnected!";
 
