@@ -32,8 +32,8 @@ namespace client
 
     std::mutex mlock;
 
-    std::thread thread_messageHandler;
-    std::thread thread_getFull;
+    pthread_t thread_messageHandler;
+    pthread_t thread_getFull;
 
     ssize_t numdisplaylines = 1;
     ssize_t numlines = 1;
@@ -225,10 +225,13 @@ namespace client
         close(SERVER_SOCKET);
 
         // WHY WON'T YOU DIE
-        raise(SIGUSR1);
+        //raise(SIGUSR1);
 
-        thread_messageHandler.join();
-        thread_getFull.join();
+        //thread_messageHandler.join();
+        //thread_getFull.join();
+
+        pthread_cancel(thread_messageHandler);
+        pthread_cancel(thread_getFull);
 
 
         exit(1);
@@ -503,10 +506,13 @@ namespace client
                             close(SERVER_SOCKET);
 
                             // WHY WON'T YOU DIE
-                            raise(SIGUSR1);
+                            //raise(SIGUSR1);
 
-                            thread_messageHandler.join();
-                            thread_getFull.join();
+                            //thread_messageHandler.join();
+                            //thread_getFull.join();
+
+                            pthread_cancel(thread_messageHandler);
+                            pthread_cancel(thread_getFull);
 
                             exit(0);
                         }
@@ -597,10 +603,13 @@ namespace client
                 close(SERVER_SOCKET);
 
                 // WHY WON'T YOU DIE
-                raise(SIGUSR1);
+                //raise(SIGUSR1);
 
-                thread_messageHandler.join();
-                thread_getFull.join();
+                //thread_messageHandler.join();
+                //thread_getFull.join();
+
+                pthread_cancel(thread_messageHandler);
+                pthread_cancel(thread_getFull);
 
                 exit(0);
             }
@@ -756,7 +765,7 @@ namespace client
         }
     }
 
-    void handleMessages()
+    void* handleMessages(void* arg)
     {
         //fprintf(stderr, "GOT HERE\n");
 
@@ -767,7 +776,7 @@ namespace client
             //fprintf(stderr, "Client got message\n");
 
             if(SERVER_LOST || SHUTDOWN_NETWORK)
-                return;
+                return NULL;
 
             if(msg.first)
             {
@@ -790,14 +799,14 @@ namespace client
                 signal_disconnect();
 
                 // leave the thread
-                return;
+                return NULL;
             }
         }
     }
 
-    void getFullLoop()
+    void* getFullLoop(void* arg)
     {
-        return;
+        return arg;
 
         while(!SERVER_LOST && !SHUTDOWN_NETWORK)
         {
@@ -847,8 +856,11 @@ namespace client
 
         wrefresh(currWindow);
 
-        thread_messageHandler = std::thread(handleMessages);
-        thread_getFull = std::thread(getFullLoop);
+        //thread_messageHandler = std::thread(handleMessages);
+        //thread_getFull = std::thread(getFullLoop);
+
+        pthread_create(&thread_messageHandler, NULL, handleMessages, NULL);
+        pthread_create(&thread_getFull, NULL, getFullLoop, NULL);
 
         //while(1);
 
@@ -1177,10 +1189,12 @@ END:
         close(SERVER_SOCKET);
 
         // WHY WON'T YOU DIE
-        raise(SIGUSR1);
+        //raise(SIGUSR1);
 
-        thread_messageHandler.join();
-        thread_getFull.join();
+        //thread_messageHandler.join();
+        //thread_getFull.join();
+        pthread_cancel(thread_messageHandler);
+        pthread_cancel(thread_getFull);
 
         fprintf(stderr, "Client joined threads normally\n");
 
