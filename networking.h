@@ -35,7 +35,8 @@ enum class PacketType : short
     WriteToDisk,
     WriteConfirmed,
     ReadFromDisk,
-    ReadConfirmed
+    ReadConfirmed,
+    Disconnect
 };
 
 static std::string PacketTypeNames[] = 
@@ -50,7 +51,8 @@ static std::string PacketTypeNames[] =
     "WriteToDisk",
     "WriteConfirmed",
     "ReadFromDisk",
-    "ReadConfirmed"
+    "ReadConfirmed",
+    "Disconnect"
 };
 
 static size_t PacketTypeNum = 11;
@@ -158,5 +160,7 @@ bool broadcast_full_content(const std::vector<int>& sockets, TextContainer<T>& t
     return true;
 
 }
+
+void broadcast_disconnect(const std::vector<int>& sockets);
 
 #endif

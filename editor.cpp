@@ -714,6 +714,19 @@ namespace client
                     break;
                 }
 
+            case PacketType::Disconnect
+            {
+                
+                // just a string
+                std::string dcmsg(msg.first + sizeof(short));
+
+                print_in_cmd_window(dcmsg.c_str());
+
+                clear_cmd_window();
+
+                break;
+            }   
+
             default:
                 {
                     fprintf(stderr, "Client got unhandled message type %d = %s\n", (short)type, ((short)type < PacketTypeNum ? PacketTypeNames[(short)type].c_str() : ""));

@@ -294,6 +294,8 @@ namespace server
         //std::cout << "Thread shutting down" << std::endl;
         printf("Thread handling client %d (sock %d) shutting down\n", clients[client_idx].id, client_fd);
 
+        broadcast_disconnect(get_socket_list());
+
         clients[client_idx].alive = false;
 
         // try to save the results
