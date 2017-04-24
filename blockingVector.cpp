@@ -243,7 +243,7 @@ void BlockingVector::printColored(WINDOW* win, std::string text)
                     // m.position(i) is index into text that the match starts at
                     // m.length(i) is length of the match
 
-                    fprintf(stderr, "got match '%s' at index %d, pos %ld and len %ld\n", m[i].str().c_str(), i, m.position(i), m.length(i));
+                    //fprintf(stderr, "got match '%s' at index %d, pos %ld and len %ld\n", m[i].str().c_str(), i, m.position(i), m.length(i));
 
                     
                     for (int po = m.position(i), le = m.length(i), in = po; in < po + le; in++)
@@ -265,8 +265,8 @@ void BlockingVector::printColored(WINDOW* win, std::string text)
         //fprintf(stderr, "done matching\n");
     }
 
-    if(any)
-        fprintf(stderr, "\n");
+    if(any);
+        //fprintf(stderr, "\n");
 
     // print everything
     size_t y = 0;
