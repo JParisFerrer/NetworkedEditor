@@ -174,7 +174,7 @@ namespace server
 
             // returns non-zero in second arg if it was error, else just no data
             // annoying here but used for the client code to not block
-            if(msg.first == nullptr && msg.second)
+            if(msg.first == nullptr && msg.second > 0)
             {
                 fprintf(stderr, "[!!] Server had trouble reading message!\n");
                 break;
