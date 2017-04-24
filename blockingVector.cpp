@@ -210,7 +210,17 @@ void BlockingVector::printColored(WINDOW* win, std::string text)
     std::vector<int> ctext(text.begin(), text.end());
 
     // loop over regex matches
-    const std::vector<std::pair<std::string, int>> keywords = {std::make_pair("\\bfor\\b", 3), std::make_pair("\\bwhile\\b", 3), std::make_pair("[\\d]+", 1), std::make_pair("\\bint\\b", 2)};
+    std::vector<std::pair<std::string, int>> keywords = {std::make_pair("\\bfor\\b", 3), std::make_pair("\\bwhile\\b", 3), make_pair("\\bdo\\b", 3), std::make_pair("[\\d]+", 1)};
+
+    std:string types[] = {"int", "long", "string", "char", "size_t", "ssize_t", "short", "bool", "[\w]+_t"};
+
+    for (std::string type : types)
+    {
+        char* ftype;
+        asprintf(&ftype, "\\b%s\\b", type.c_str());
+        keywords.push_back(std::make_pair(std::string(ftype), 2));
+        free(ftype);
+    }
 
     bool any = false;
     for(auto r : keywords)
