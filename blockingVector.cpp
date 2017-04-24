@@ -219,7 +219,8 @@ void BlockingVector::printColored(WINDOW* win, std::string text)
         std::smatch m;
         try
         {
-            while(std::regex_search(text, m, std::regex(r.first)))
+            std::string temptext = text;
+            while(std::regex_search(temptext, m, std::regex(r.first)))
             {
                 any = true;
 
@@ -239,6 +240,8 @@ void BlockingVector::printColored(WINDOW* win, std::string text)
                             ctext[in] |= COLOR_PAIR(r.second);
                     }
                 }
+
+                temptext = m.suffix().str();
             }
         }
         catch (const std::exception& e)
