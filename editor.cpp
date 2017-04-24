@@ -296,7 +296,7 @@ namespace client
                 continue;
             }
 
-            if (setsockopt(socket_fd, IPPROTO_TCP, TCP_NODELAY, (void*)&no, sizeof(int)) == -1)
+            if (setsockopt(socket_fd, IPPROTO_TCP, TCP_NODELAY, (void*)&yes, sizeof(int)) == -1)
             {
                 perror("setsockopt");
                 return 5;
