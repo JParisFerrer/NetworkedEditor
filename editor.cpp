@@ -714,7 +714,7 @@ namespace client
                     break;
                 }
 
-            case PacketType::Disconnect
+            case PacketType::Disconnect:
             {
                 
                 // just a string
