@@ -354,7 +354,7 @@ namespace client
         struct sigaction res;
         res.sa_handler = resize_handler;
         sigfillset(&res.sa_mask);
-        res.sa_flags = SA_RESTART;
+        res.sa_flags = 0 && SA_RESTART;
         sigaction(SIGWINCH, &res, NULL);
         //signal(SIGWINCH, resize_handler);
         //signal(SIGINT, exit_handler);
