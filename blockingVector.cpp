@@ -220,6 +220,7 @@ void BlockingVector::printColored(WINDOW* win, std::string text)
         try
         {
             std::string temptext = text;
+            size_t offset = 0;
             while(std::regex_search(temptext, m, std::regex(r.first)))
             {
                 any = true;
@@ -234,14 +235,15 @@ void BlockingVector::printColored(WINDOW* win, std::string text)
                     fprintf(stderr, "got match '%s' at index %d, pos %ld and len %ld\n", m[i].str().c_str(), i, m.position(i), m.length(i));
 
                     
-                    for (int po = m.position(i) + 1, le = m.length(i), in = po; in < po + le; in++)
+                    for (int po = m.position(i), le = m.length(i), in = po; in < po + le; in++)
                     {
-                        if(!std::isspace(ctext[in]))
-                            ctext[in] |= COLOR_PAIR(r.second);
+                        if(!std::isspace(ctext[in + offset]))
+                            ctext[in + offset] |= COLOR_PAIR(r.second);
                     }
                 }
 
                 temptext = m.suffix().str();
+                offset += m.length(0) + m.position(0);
             }
         }
         catch (const std::exception& e)
