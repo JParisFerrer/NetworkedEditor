@@ -131,6 +131,8 @@ bool send_full_content(int sock, TextContainer<T>& text)
 
     free(ser.first);
 
+    fprintf(stderr, "sent full data\n");
+
     return ret;
 }
 
