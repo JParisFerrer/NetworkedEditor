@@ -9,6 +9,7 @@
 #include <mutex>
 #include <regex>
 #include <utility>
+#include <cctype>
 #include "networking.h"
 
 
