@@ -14,6 +14,7 @@ namespace client
     // the KEY_ENTER is wrong, use this constant instead
 #define ENTER_KEY 13
 #define CTRL_Q 17
+#define CTRL_S 19
 #define DELETE_KEY 330
 
     WINDOW* mainWindow;
@@ -1154,6 +1155,12 @@ namespace client
                 }
 
                 move_win_rel(currWindow, 1, 0);
+            }
+            else if (in == CTRL_S)
+            {
+                // syncronize
+
+                send_get_full(SERVER_SOCKET);
             }
             else if (in == 410)
             {

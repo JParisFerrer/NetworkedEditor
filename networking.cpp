@@ -500,7 +500,7 @@ bool broadcast_read_confirm(const std::vector<int> & sockets, size_t lines, std:
 
 bool send_get_full(int sock)
 {
-    fprintf(stderr, "[%s] entered\n", __func__);
+    //fprintf(stderr, "[%s] entered\n", __func__);
     
     size_t len = sizeof(short);
     len = std::max((size_t)10, len);// for reasons, make this at least 10

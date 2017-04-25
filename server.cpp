@@ -274,7 +274,7 @@ namespace server
                 case PacketType::GetFull:
                 {
                     // send a full to them
-                    fprintf(stderr, "got full request\n");
+                    //fprintf(stderr, "got full request\n");
                     send_full_content(client_fd, text);
 
                     break;
