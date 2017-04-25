@@ -198,8 +198,20 @@ void BlockingVector::print(WINDOW* win, size_t line,size_t maxWidth){
     printColored(win, s);
 }
 
+bool contains(std::vector<std::pair<size_t, size_t>> & v, size_t s)
+{
+    for(auto & r : v)
+    {
+        if (s >= r.first && s < r.first + r.second)
+            return true;
+    }
+
+    return false;
+}
+
 void BlockingVector::printColored(WINDOW* win, std::string text)
 {
+
     //std::lock_guard<std::mutex> lock(vectorLock);
     // set up colors
     start_color();
@@ -211,9 +223,11 @@ void BlockingVector::printColored(WINDOW* win, std::string text)
     std::vector<int> ctext(text.begin(), text.end());
 
     // loop over regex matches
-    std::vector<std::pair<std::string, int>> keywords = {std::make_pair("\\bfor\\b", 3), std::make_pair("\\bwhile\\b", 3), std::make_pair("\\bdo\\b", 3), std::make_pair("[\\d]+", 1), std::make_pair("\"[^\"]*\"", 4)};
+    std::vector<std::pair<std::string, int>> keywords = {std::make_pair("\"[^\"]*\"", 4), std::make_pair("\\bfor\\b", 3), std::make_pair("\\bwhile\\b", 3), std::make_pair("\\bdo\\b", 3), std::make_pair("[\\d]+", 1), std::make_pair("^#[\\w]+", 3)};
 
     std::string types[] = {"int", "long", "string", "char", "size_t", "ssize_t", "short", "bool", "[\\w]+_t"};
+
+    std::vector<std::pair<size_t, size_t>> already_matched;
 
     for (std::string type : types)
     {
@@ -245,12 +259,24 @@ void BlockingVector::printColored(WINDOW* win, std::string text)
 
                     //fprintf(stderr, "got match '%s' at index %d, pos %ld and len %ld\n", m[i].str().c_str(), i, m.position(i), m.length(i));
 
-                    
+                    std::string trimmed = m[i].str();
+                    trim(trimmed);
+
+                    bool colored = false;
+                    size_t first = 0;
                     for (int po = m.position(i), le = m.length(i), in = po; in < po + le; in++)
                     {
-                        if(!std::isspace(ctext[in + offset]))
+                        if(!std::isspace(ctext[in + offset]) && !contains(already_matched, in + offset))
+                        {
                             ctext[in + offset] |= COLOR_PAIR(r.second);
+                            if(!colored)
+                                first = in + offset;
+                            colored = true;
+                        }
                     }
+
+                    if(colored)
+                        already_matched.push_back(std::make_pair(first, trimmed.length()));
                 }
 
                 temptext = m.suffix().str();
