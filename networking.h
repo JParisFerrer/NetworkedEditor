@@ -1,6 +1,6 @@
 #ifndef NETWORKING_H
 #define NETWORKING_H
-
+#include <vector>
 #include <cstdlib>
 #include <algorithm>
 #include <errno.h>
