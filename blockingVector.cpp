@@ -5,6 +5,31 @@
 
 extern WINDOW* mainWindow;
 
+
+
+// trim from start
+static inline std::string &ltrim(std::string &s) {
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(),
+            std::not1(std::ptr_fun<int, int>(std::isspace))));
+    return s;
+}
+
+// trim from end
+static inline std::string &rtrim(std::string &s) {
+    s.erase(std::find_if(s.rbegin(), s.rend(),
+            std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
+    return s;
+}
+
+// trim from both ends
+static inline std::string &trim(std::string &s) {
+    return ltrim(rtrim(s));
+}
+
+
+
+
+
 /*Constructors*/
 BlockingVector::BlockingVector(){
     data.push_back(std::vector<int> ());
@@ -152,16 +177,114 @@ void BlockingVector::print(WINDOW* win, size_t line,size_t maxWidth){
     std::lock_guard<std::mutex> lock(vectorLock);
 
     size_t index = 0;
+    std::vector<int> chars;
+
+    wclear(win);
+
     for(size_t i = line; i < this->data.size(); i++, index++){
         // clear screen
-        wmove(win, index, 0);
-        waddstr(win, "                                                                                                                                                 ");   // clear line
+        //wmove(win, index, 0);
+        //waddstr(win, "                                                                                                                                                 ");   // clear line
         for(size_t j = 0; j < std::min(this->data[i].size(), maxWidth); j++){
             //std::cout << (char)data[i][j];
-            mvwaddch(win, index, j, this->data[i][j]);
+            //mvwaddch(win, index, j, this->data[i][j]);
+            chars.push_back(this->data[i][j]);
         }
         //std::cout<<std::endl;
+        chars.push_back(ENTER_KEY);
     }
+
+    std::string s (chars.begin(), chars.end());
+    printColored(win, s);
+}
+
+void BlockingVector::printColored(WINDOW* win, std::string text)
+{
+    //std::lock_guard<std::mutex> lock(vectorLock);
+    // set up colors
+    start_color();
+    init_pair(1, COLOR_YELLOW, COLOR_BLACK);
+    init_pair(2, COLOR_CYAN, COLOR_BLACK);
+    init_pair(3, COLOR_BLUE, COLOR_BLACK);
+    init_pair(4, COLOR_RED, COLOR_BLACK);
+
+    std::vector<int> ctext(text.begin(), text.end());
+
+    // loop over regex matches
+    std::vector<std::pair<std::string, int>> keywords = {std::make_pair("\\bfor\\b", 3), std::make_pair("\\bwhile\\b", 3), std::make_pair("\\bdo\\b", 3), std::make_pair("[\\d]+", 1), std::make_pair("\"[^\"]*\"", 4)};
+
+    std::string types[] = {"int", "long", "string", "char", "size_t", "ssize_t", "short", "bool", "[\\w]+_t"};
+
+    for (std::string type : types)
+    {
+        char* ftype;
+        asprintf(&ftype, "\\b%s\\b", type.c_str());
+        keywords.push_back(std::make_pair(std::string(ftype), 2));
+        free(ftype);
+    }
+
+    bool any = false;
+    for(auto r : keywords)
+    {
+        //fprintf(stderr, "started matching\n");
+        std::smatch m;
+        try
+        {
+            std::string temptext = text;
+            size_t offset = 0;
+            while(std::regex_search(temptext, m, std::regex(r.first)))
+            {
+                any = true;
+
+                // got a match
+                for(int i = 0; i < m.size(); i++)
+                {
+                    // i is the index into m of our match
+                    // m.position(i) is index into text that the match starts at
+                    // m.length(i) is length of the match
+
+                    //fprintf(stderr, "got match '%s' at index %d, pos %ld and len %ld\n", m[i].str().c_str(), i, m.position(i), m.length(i));
+
+                    
+                    for (int po = m.position(i), le = m.length(i), in = po; in < po + le; in++)
+                    {
+                        if(!std::isspace(ctext[in + offset]))
+                            ctext[in + offset] |= COLOR_PAIR(r.second);
+                    }
+                }
+
+                temptext = m.suffix().str();
+                offset += m.length(0) + m.position(0);
+            }
+        }
+        catch (const std::exception& e)
+        {
+            std::cerr << e.what() << std::endl;
+        }
+
+        //fprintf(stderr, "done matching\n");
+    }
+
+    if(any);
+        //fprintf(stderr, "\n");
+
+    // print everything
+    size_t y = 0;
+    size_t x = 0;
+    for(int ch : ctext)
+    {
+        if(ch == ENTER_KEY)
+        {
+            y++;
+            x = 0;
+
+            continue;
+        }
+
+        mvwaddch(win, y, x, ch);
+        x++;
+    }
+
 }
 
 std::pair<char*, size_t> BlockingVector::serialize()

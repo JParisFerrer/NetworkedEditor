@@ -367,7 +367,7 @@ namespace client
         struct sigaction res;
         res.sa_handler = resize_handler;
         sigfillset(&res.sa_mask);
-        res.sa_flags = SA_RESTART;
+        res.sa_flags = 0 & SA_RESTART;
         sigaction(SIGWINCH, &res, NULL);
         
         res.sa_handler = sigusr_handler;
@@ -1193,7 +1193,9 @@ END:
         SHUTDOWN_NETWORK = true;
 
         // force that persistent thread to die
-        close(SERVER_SOCKET);
+        int cret = close(SERVER_SOCKET);
+        if(cret)
+            perror("close");
 
         // WHY WON'T YOU DIE
         //raise(SIGUSR1);
