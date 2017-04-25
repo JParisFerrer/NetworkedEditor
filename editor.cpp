@@ -17,6 +17,8 @@ namespace client
 #define CTRL_S 19
 #define DELETE_KEY 330
 
+#define TAB_WIDTH 4
+
     WINDOW* mainWindow;
     WINDOW* commandWindow;
     WINDOW* currWindow;
@@ -1161,6 +1163,22 @@ namespace client
                 // syncronize
 
                 send_get_full(SERVER_SOCKET);
+            }
+            else if (in == '\t')
+            {
+                // insert 4 spaces
+
+                //fprintf(stderr, "tab\n");
+
+                int x, y;
+                getyx(currWindow, y, x);
+
+                for(int i = 0; i < TAB_WIDTH; i++)
+                {
+                    insert_char(y + lineoffset, x, ' ');
+                }
+
+                move_win_rel(currWindow, 4, 0);
             }
             else if (in == 410)
             {
