@@ -5,9 +5,13 @@
 #include <unordered_map>
 #include <thread>
 #include <atomic>
+#include <fstream>
+#include <iostream>
 #include <chrono>
 #include "curses.h"
 #include <cstring>
+#include "networking.h"
+
 #define CHARBUFFER 4
 #define BUFFERLEN 4
 #define UNUSEDINT 999999
@@ -66,6 +70,9 @@ public:
   void writeToFile(std::string fileName);
   size_t readFromFile(std::string fileName);
   void print(size_t line,size_t maxWidth);
+
+  std::pair<char*, size_t> serialize();
+  size_t deserialize(char* buf, size_t len);
 
   size_t line_width(size_t y);
 

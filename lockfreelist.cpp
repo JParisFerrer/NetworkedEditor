@@ -631,15 +631,6 @@ void LockFreeList::move(size_t line, size_t index){
 
 }
 
-void LockFreeList::writeToFile(std::string fileName){
-
-}
-
-size_t LockFreeList::readFromFile(std::string fileName){
-
-    return 0;
-}
-
 void LockFreeList::print(size_t line,size_t maxWidth){
 
     // LockFreeList* t = this;
@@ -716,4 +707,172 @@ void LockFreeList::printDebug(){
 
 void LockFreeList::writeToFileDebug(){
 
+}
+
+
+void LockFreeList::writeToFile(std::string filename)
+{
+    // serialize ourselves to a file
+    // could do realloc but too lazy, so do a two pass
+
+    std::ofstream outFile;
+    outFile.open(filename, std::fstream::out);
+
+    BufferList * list;
+    bool ret = getLine(0, list);
+
+    while(list!=nullptr){
+
+        Buffer* lineData=list->line;
+        size_t printindex = 0;
+        while(lineData!=nullptr){
+            for (size_t i = 0; i < CHARBUFFER; i++) {
+                if (lineData->buffer[i]!=UNUSEDINT) {
+                    outFile << (char)lineData->buffer[i];
+                }
+
+            }
+            lineData=lineData->next;
+            outFile << std::endl;
+        }
+
+        list=list->next;
+    }
+
+}
+
+
+size_t LockFreeList::readFromFile(std::string filename)
+{
+    std::fstream in;
+    in.open(filename, std::fstream::in);
+
+    size_t linei = 0;
+    size_t i = 0;
+    std::string line;
+
+    while(std::getline(in, line))
+    {
+        i = 0;
+
+        for(const char & c : line)
+        {
+            insert(linei, i++, c);
+        }
+        linei++;
+    }
+
+    return linei;
+}
+
+std::pair<char*, size_t> LockFreeList::serialize()
+{
+
+    // serialize ourselves to a new buffer
+    // could do realloc but too lazy, so do a two pass
+
+    // add 12 bytes (3 ints) at the beginning, for reasons
+    size_t len = 3;
+
+    //for(size_t y = 0; y < data.size(); y++)
+    //{
+        //for(size_t x = 0; x < data[y].size(); x++)
+        //{
+            //len ++;
+        //}
+        //len ++;     // add in the newline terminator
+    //}
+
+    BufferList * list;
+    getLine(0, list);
+
+    while(list!=nullptr){
+
+        Buffer* lineData=list->line;
+        size_t printindex = 0;
+        while(lineData!=nullptr){
+            for (size_t i = 0; i < CHARBUFFER; i++) {
+                if (lineData->buffer[i]!=UNUSEDINT) {
+                    len++;
+                }
+
+            }
+            lineData=lineData->next;
+            len++;      // add in the newline
+        }
+
+        list=list->next;
+    }
+
+    int* ret = new int[len];
+
+    // start at 4th int
+    size_t i = 3;
+
+    //for(size_t y = 0; y < data.size(); y++)
+    //{
+        //for(size_t x = 0; x < data[y].size(); x++)
+        //{
+            //ret[i++] = htonl(data[y][x]);
+        //}
+
+        //ret[i++] = htonl((int)'\n');     // add in the newline terminator
+    //}
+
+    getLine(0, list);
+
+    while(list!=nullptr){
+
+        Buffer* lineData=list->line;
+        size_t printindex = 0;
+        while(lineData!=nullptr){
+            for (size_t i = 0; i < CHARBUFFER; i++) {
+                if (lineData->buffer[i]!=UNUSEDINT) {
+                    ret[i++] = htonl(lineData->buffer[i]);
+                }
+            }
+            lineData=lineData->next;
+            ret[i++] = htonl((int)'\n');
+        }
+
+        list=list->next;
+    }
+
+
+    return std::make_pair((char*)ret, (len)*4);
+}
+
+
+size_t LockFreeList::deserialize(char* ibuf, size_t len)
+{
+    // get a reasonable int array back
+    // also skip first 12 bytes (3 ints) for reasons
+    int* buf = (int*)(ibuf + 12);
+    len /= 4;
+    len -= 3;
+
+
+    size_t line = 0;
+    size_t read = 0;
+    size_t i = 0;
+    // throw away first 10 bytes, for reasons
+    int* t = buf;
+
+    while(read < len)
+    {
+        i = 0;
+
+        while(ntohl(*t) != '\n')
+        {
+            insert(line, i++, ntohl(*t));
+            read++;
+            t++;
+        }
+        line++;
+        read++;
+        t++;
+        // add a new line (actually don't because of insert
+    }
+
+    return line;
 }
