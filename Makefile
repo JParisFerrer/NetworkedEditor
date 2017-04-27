@@ -5,8 +5,8 @@ EXENAME = editor
 
 all: $(EXENAME)
 
-$(EXENAME) : main.o editor.o server.o textcontainer.cpp textcontainer.h blockingVector.o networking.o
-	$(CXX) main.o editor.o server.o blockingVector.o networking.o $(LDFLAGS) -o editor
+$(EXENAME) : main.o editor.o server.o textcontainer.cpp textcontainer.h blockingVector.o lockfreelist.o networking.o
+	$(CXX) main.o editor.o server.o blockingVector.o lockfreelist.o networking.o $(LDFLAGS) -o editor
 
 main.o : main.cpp editor.h server.h
 	$(CXX) $(CXXFLAGS) main.cpp

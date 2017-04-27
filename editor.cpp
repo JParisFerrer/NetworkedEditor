@@ -39,7 +39,7 @@ namespace client
     volatile bool HANDLED_SERVER_LOST = false;
 
     //vector<vector< int >> data;
-    TextContainer<BlockingVector> text;
+    TextContainer<LockFreeList> text;
     std::vector<int> commands;
 
     std::mutex mlock;

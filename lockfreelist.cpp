@@ -631,7 +631,7 @@ void LockFreeList::move(size_t line, size_t index){
 
 }
 
-void LockFreeList::print(size_t line,size_t maxWidth){
+void LockFreeList::print(WINDOW* win, size_t line,size_t maxWidth){
 
     // LockFreeList* t = this;
     //
@@ -672,10 +672,10 @@ void LockFreeList::print(size_t line,size_t maxWidth){
         return;
     }
 
-    wclear(mainWindow);
+    wclear(win);
     size_t index = 0;
     while(list!=nullptr){
-        wmove(mainWindow, index, 0);
+        wmove(win, index, 0);
         //waddstr(mainWindow, "                                                                                                                                    ");
 
         Buffer* lineData=list->line;
@@ -683,7 +683,7 @@ void LockFreeList::print(size_t line,size_t maxWidth){
         while(lineData!=nullptr){
             for (size_t i = 0; i < CHARBUFFER; i++) {
                 if (lineData->buffer[i]!=UNUSEDINT) {
-                     mvwaddch(mainWindow, index, printindex, lineData->buffer[i]);
+                     mvwaddch(win, index, printindex, lineData->buffer[i]);
 
                     printindex++;
                 }

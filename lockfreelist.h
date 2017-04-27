@@ -69,7 +69,7 @@ public:
   void move(size_t line, size_t index);
   void writeToFile(std::string fileName);
   size_t readFromFile(std::string fileName);
-  void print(size_t line,size_t maxWidth);
+  void print(WINDOW* win, size_t line,size_t maxWidth);
 
   std::pair<char*, size_t> serialize();
   size_t deserialize(char* buf, size_t len);
