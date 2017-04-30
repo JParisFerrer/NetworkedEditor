@@ -44,7 +44,7 @@ namespace client
     std::vector<int> commands;
 
     std::mutex mlock;
-    std::mutex glock;
+    //std::mutex glock;
 
     std::thread thread_messageHandler;
     std::thread thread_getFull;
@@ -672,8 +672,8 @@ namespace client
                         numdisplaylines = numlines;
 
                     //wrefresh(mainWindow);
-                    glock.unlock();
-                    log("unlocked glock");
+                    //glock.unlock();
+                    //log("unlocked glock");
 
                     break;
                 }
@@ -787,9 +787,9 @@ namespace client
         while(!SERVER_LOST && !SHUTDOWN_NETWORK)
         {
             sleep(3);
-            log("locking glock");
-            glock.lock();
-            log("locked glock");
+            //log("locking glock");
+            //glock.lock();
+            //log("locked glock");
             send_get_full(SERVER_SOCKET);
         }
     }
@@ -857,7 +857,7 @@ namespace client
             in = wgetch(currWindow);
             //log("read char: %d", in);
 
-            glock.lock();
+            //glock.lock();
             mlock.lock();
 
             if((SERVER_LOST || SHUTDOWN_NETWORK) && !HANDLED_SERVER_LOST)
@@ -868,7 +868,7 @@ namespace client
             {
                 log("client got normal quit command");
                 mlock.unlock();
-                glock.unlock();
+                //glock.unlock();
                 break;
             }
             else if (in == KEY_UP)
@@ -1152,7 +1152,7 @@ END:
 
             refresh_screen();
 
-            glock.unlock();
+            //glock.unlock();
             mlock.unlock();
         }
 
