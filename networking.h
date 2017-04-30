@@ -13,6 +13,11 @@
 #include <cstring>
 #include <mutex>
 #include <unistd.h>
+#include <iomanip>
+#include <ctime>
+#include <chrono>
+#include <iostream>
+
 #include "textcontainer.h"
 
 
@@ -55,6 +60,16 @@ static std::string PacketTypeNames[] =
 
 static size_t PacketTypeNum = 11;
 
+#define log(...) \
+    do { \
+    std::chrono::system_clock::time_point now = std::chrono::system_clock::now(); \
+    std::time_t now_c = std::chrono::system_clock::to_time_t(now); \
+    char logcharbuf[4096]; \
+    std::strftime(logcharbuf, 4095, "%H:%M:%S", std::localtime(&now_c)); \
+    fprintf(stderr, "[%s] ", logcharbuf); \
+    fprintf(stderr, __VA_ARGS__); \
+    fprintf(stderr, "\n"); \
+    } while(0);
 
 uint64_t htonll(uint64_t value);
 
@@ -114,6 +129,8 @@ bool send_get_full(int sock);
 template <class T>
 bool send_full_content(int sock, TextContainer<T>& text)
 {
+    log("sending full content");
+
     std::pair<char*, size_t> ser = text.serialize();
 
     size_t len = sizeof(short) + ser.second;
@@ -125,9 +142,14 @@ bool send_full_content(int sock, TextContainer<T>& text)
     bool ret = send_message(sock, buf, len);
 
     if(!ret)
-        fprintf(stderr, "[!!!] [%s] bad return value\n", __func__);
+    {
+        const char* c = __func__;
+        log( "[!!!] [%s] bad return value", c);
+    }
 
     free(ser.first);
+
+    log("sent full content");
 
     return ret;
 }
@@ -135,6 +157,8 @@ bool send_full_content(int sock, TextContainer<T>& text)
 template <class T>
 bool broadcast_full_content(const std::vector<int>& sockets, TextContainer<T>& text)
 {
+    log("broadcasting full content");
+
     std::pair<char*, size_t> ser = text.serialize();
 
     size_t len = sizeof(short) + ser.second;
@@ -149,11 +173,16 @@ bool broadcast_full_content(const std::vector<int>& sockets, TextContainer<T>& t
         bool ret = send_message(sock, buf, len);
 
         if(!ret)
-            fprintf(stderr, "[!!!] [%s] bad return value for socket %d\n", __func__, sock);
+        {
+            const char* c = __func__;
+            log("[!!!] [%s] bad return value for socket %d", c, sock);
+        }
 
     }
 
     free(ser.first);
+
+    log("broadcasted full content");
 
     return true;
 

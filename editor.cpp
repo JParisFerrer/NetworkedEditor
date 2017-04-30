@@ -39,10 +39,12 @@ namespace client
     volatile bool HANDLED_SERVER_LOST = false;
 
     //vector<vector< int >> data;
-    TextContainer<LockFreeList> text;
+    TextContainer<BlockingVector> text;
+    //TextContainer<LockFreeList> text;
     std::vector<int> commands;
 
     std::mutex mlock;
+    std::mutex glock;
 
     std::thread thread_messageHandler;
     std::thread thread_getFull;
@@ -139,7 +141,7 @@ namespace client
 
     void refresh_screen()
     {
-        //fprintf(stderr, "in function %s\n", __func__);
+        //log("in function %s", __func__);
         int sx_main, sy_main, sx_command, sy_command;
         int maxx, maxy;
         getmaxyx(stdscr, maxy, maxx);
@@ -167,12 +169,12 @@ namespace client
         //wrefresh(commandWindow);
         wrefresh(currWindow);       // the cursor is drawn on refresh
 
-        //fprintf(stderr, "left function %s\n", __func__);
+        //log("left function %s", __func__);
     }
 
     void move_win_rel(WINDOW* win, int xoffs, int yoffs)
     {
-        //fprintf(stderr, "in function %s\n", __func__);
+        //log("in function %s", __func__);
 
         int x, y;
         getyx(win, y, x);
@@ -219,13 +221,13 @@ namespace client
             wmove(win, 0, capped_x);
         }
 
-        //fprintf(stderr, "left function %s\n", __func__);
+        //log("left function %s", __func__);
 
     }
 
     void exit_handler(int sigint)
     {
-        fprintf(stderr, "in function %s\n", __func__);
+        log("in function %s", __func__);
 
         endwin();
 
@@ -245,7 +247,7 @@ namespace client
 
     void resize_handler(int sigwinch)
     {
-        fprintf(stderr, "in function %s\n", __func__);
+        log("in function %s", __func__);
 
         endwin();
         refresh();
@@ -273,13 +275,13 @@ namespace client
 
         //refresh_screen();
 
-        fprintf(stderr, "left function %s\n", __func__);
+        log("left function %s", __func__);
     }
 
     // credit to https://beej.us/guide/bgnet/output/html/multipage/clientserver.html
     int network_setup()
     {
-        fprintf(stderr, "in function %s\n", __func__);
+        log("in function %s", __func__);
 
         SHUTDOWN_NETWORK = false;
 
@@ -294,7 +296,7 @@ namespace client
         if(ret)
         {
             // would use cerr but formatting is nice
-            fprintf(stderr, "getaddrinfo failed: %s\n", gai_strerror(ret));
+            log("getaddrinfo failed: %s", gai_strerror(ret));
             return 1;
         }
 
@@ -321,7 +323,7 @@ namespace client
                 continue;
             }
 
-            fprintf(stderr, "Connected to server at %s on port %s\n", SERVER_ADDRESS.c_str(), SERVER_SEARCH_PORT.c_str());
+            log("Connected to server at %s on port %s", SERVER_ADDRESS.c_str(), SERVER_SEARCH_PORT.c_str());
 
             // if we made it here, then we connected fine
             break;
@@ -329,7 +331,7 @@ namespace client
 
         if (traverser == nullptr)
         {
-            fprintf(stderr, "Failed to connect to '%s' using port '%s'", SERVER_ADDRESS.c_str(), SERVER_SEARCH_PORT.c_str());
+            log("Failed to connect to '%s' using port '%s'", SERVER_ADDRESS.c_str(), SERVER_SEARCH_PORT.c_str());
             return 2;
         }
 
@@ -342,15 +344,15 @@ namespace client
 
     int setup()
     {
-        fprintf(stderr, "in function %s\n", __func__);
+        log("in function %s", __func__);
 
         int ret = network_setup();
 
-        fprintf(stderr, "Finished client network setup\n");
+        log("Finished client network setup");
 
         if(ret)
         {
-            fprintf(stderr, "Error in networking setup! code: %d\n", ret);
+            log("Error in networking setup! code: %d", ret);
             return ret;
         }
 
@@ -409,7 +411,7 @@ namespace client
             free(c);
         }
 
-        fprintf(stderr, "Finished setting up client\n");
+        log("Finished setting up client");
 
         return 0;
     }
@@ -419,7 +421,7 @@ namespace client
         SERVER_LOST = true;
         SHUTDOWN_NETWORK = true;
 
-        fprintf(stderr, "Client lost connection to the server\n");
+        log("Client lost connection to the server");
     }
 
     void handle_disconnect()
@@ -438,7 +440,7 @@ namespace client
 
             if(c == 's')
             {
-                fprintf(stderr, "client chose to save locally and quit\n");
+                log("client chose to save locally and quit");
 
                 clear_cmd_window();
 
@@ -451,7 +453,7 @@ namespace client
                 {
                     c = wgetch(commandWindow);
 
-                    //fprintf(stderr, "client got %d (%c)\n", c, (char)c);
+                    //log("client got %d (%c)", c, (char)c);
 
                     if (c == KEY_UP)
                     {
@@ -478,7 +480,7 @@ namespace client
                         //print_in_cmd_window(str.str().c_str());
 
                         std::vector<std::string> v = split(str.str(), ' ');
-                        fprintf(stderr, "v size = %lu, ,v[0]=%s\n", v.size(), v[0].c_str());
+                        log("v size = %lu, ,v[0]=%s", v.size(), v[0].c_str());
                         v.pop_back();
 
                         if(v.size() == 1)
@@ -490,12 +492,12 @@ namespace client
                             print_in_cmd_window(c);
                             free(c);        // I think it uses malloc
 
-                            //fprintf(stderr, "Writing file %s\n", v[1].c_str());
+                            //log("Writing file %s", v[1].c_str());
 
                             //send_write(SERVER_SOCKET, v[1]);
 
                             endwin();
-                            fprintf(stderr, "Client chose to save and exit after disconnect\n");
+                            log("Client chose to save and exit after disconnect");
 
                             // force that persistent thread to die
                             close(SERVER_SOCKET);
@@ -557,15 +559,15 @@ namespace client
                     int y, x;
                     getyx(commandWindow, y, x);
 
-                    //fprintf(stderr, "updating command window\n");
+                    //log("updating command window");
 
                     for(int xi = 0; xi < commands.size(); xi++)
                     {
                         // 0 is y coord in the window
                         mvwaddch(commandWindow, 0, xi, commands[xi]);
-                        //fprintf(stderr, "%c", (char)commands[xi]);
+                        //log("%c", (char)commands[xi]);
                     }
-                    //fprintf(stderr, "\n");
+                    //log("");
 
                     wmove(commandWindow, y, x);
 
@@ -574,7 +576,7 @@ namespace client
             } 
             else if (c == 'c')
             {
-                fprintf(stderr, "Client chose to continue locally after disconnect\n");
+                log("Client chose to continue locally after disconnect");
 
                 HANDLED_SERVER_LOST = true;
 
@@ -586,7 +588,7 @@ namespace client
             {
                 endwin();
 
-                fprintf(stderr, "Client chose to exit after disconnect\n");
+                log("Client chose to exit after disconnect");
 
                 // force that persistent thread to die
                 close(SERVER_SOCKET);
@@ -612,7 +614,7 @@ namespace client
     {
         PacketType type = get_bytes_as<PacketType>(msg.first, 0);
 
-        //fprintf(stderr, "Client got message of type %d, %s\n", (short)type, ((short)type < PacketTypeNum ? PacketTypeNames[(short)type].c_str() : ""));
+        //log("Client got message of type %d, %s", (short)type, ((short)type < PacketTypeNum ? PacketTypeNames[(short)type].c_str() : ""));
 
         switch(type)
         {
@@ -655,6 +657,8 @@ namespace client
             case PacketType::FullContent:
                 {
                     // rest of it is serialized thing
+                    log("got full content");
+
                     size_t lines = text.deserialize(msg.first + sizeof(short), msg.second - sizeof(short));
 
                     numlines = lines;
@@ -668,13 +672,15 @@ namespace client
                         numdisplaylines = numlines;
 
                     //wrefresh(mainWindow);
+                    glock.unlock();
+                    log("unlocked glock");
 
                     break;
                 }
 
             case PacketType::Insert:
                 {
-                    //fprintf(stdout, "Got insert!\n");
+                    //fprintf(stdout, "Got insert!");
 
                     size_t y, x;
                     int c;
@@ -705,7 +711,7 @@ namespace client
 
             case PacketType::Remove:
                 {
-                    //fprintf(stdout, "Got remove!\n");
+                    //fprintf(stdout, "Got remove!");
 
                     size_t y, x;
                     y = get_bytes_as<size_t>(msg.first, sizeof(short));
@@ -728,21 +734,23 @@ namespace client
 
             default:
                 {
-                    fprintf(stderr, "Client got unhandled message type %d = %s\n", (short)type, ((short)type < PacketTypeNum ? PacketTypeNames[(short)type].c_str() : ""));
+                    log("Client got unhandled message type %d = %s", (short)type, ((short)type < PacketTypeNum ? PacketTypeNames[(short)type].c_str() : ""));
                     break;
                 }
         }
+
+        mlock.unlock();
     }
 
     void handleMessages()
     {
-        //fprintf(stderr, "GOT HERE\n");
+        //log("GOT HERE");
 
         while(1)
         {
-            //fprintf(stderr, "Client getting message\n");
+            //log("Client getting message");
             std::pair<char*, size_t> msg = get_message(SERVER_SOCKET, true);
-            //fprintf(stderr, "Client got message\n");
+            //log("Client got message");
 
             if(SERVER_LOST || SHUTDOWN_NETWORK)
                 return;
@@ -752,15 +760,16 @@ namespace client
 
                 mlock.lock();
 
-                //fprintf(stderr, "Client got lock\n");
+                //log("Client got lock");
 
                 handleMessage(msg);
 
-                //fprintf(stderr, "Client got message\n");
+                //log("Client got message");
 
                 free_message(msg.first);
 
-                mlock.unlock();
+                // moved to inside handleMessage so that we can choose not to unlock it (for full reqs)
+                //mlock.unlock();
             }
             else if (msg.second == -1)
             {
@@ -775,18 +784,19 @@ namespace client
 
     void getFullLoop()
     {
-        return;
-
         while(!SERVER_LOST && !SHUTDOWN_NETWORK)
         {
-            sleep(1);
+            sleep(3);
+            log("locking glock");
+            glock.lock();
+            log("locked glock");
             send_get_full(SERVER_SOCKET);
         }
     }
 
     int client_entrypoint()
     {
-        fprintf(stderr, "in function %s\n", __func__);
+        log("in function %s", __func__);
 
         sleep(1);
         int ret = setup();
@@ -805,7 +815,7 @@ namespace client
         if(ret)
         {
             endwin();
-            fprintf(stderr, "Error in setup! code: %d\n", ret);
+            log("Error in setup! code: %d", ret);
             return ret;
         }
 
@@ -843,10 +853,11 @@ namespace client
             int maxx, maxy;
             getmaxyx(mainWindow, maxy, maxx);
 
-            //fprintf(stderr, "reading char\n");
+            //log("reading char");
             in = wgetch(currWindow);
-            //fprintf(stderr, "read char: %d\n", in);
+            //log("read char: %d", in);
 
+            glock.lock();
             mlock.lock();
 
             if((SERVER_LOST || SHUTDOWN_NETWORK) && !HANDLED_SERVER_LOST)
@@ -855,8 +866,9 @@ namespace client
 
             if(in == CTRL_Q)        // exit on CTRL+Q
             {
-                fprintf(stderr, "client got normal quit command\n");
+                log("client got normal quit command");
                 mlock.unlock();
+                glock.unlock();
                 break;
             }
             else if (in == KEY_UP)
@@ -927,7 +939,7 @@ namespace client
                                        free(c);        // I think it uses malloc
                                        */
 
-                                    fprintf(stderr, "Writing file %s\n", v[1].c_str());
+                                    log("Writing file %s", v[1].c_str());
 
                                     send_write(SERVER_SOCKET, v[1]);
                                 }
@@ -986,7 +998,7 @@ namespace client
                                     print_in_cmd_window(c);
                                     free(c);        // I think it uses malloc
 
-                                    //fprintf(stderr, "Writing file %s\n", v[1].c_str());
+                                    //log("Writing file %s", v[1].c_str());
 
                                     //send_write(SERVER_SOCKET, v[1]);
                                 }
@@ -1134,18 +1146,19 @@ namespace client
                 //std::cerr << in << std::endl;
 
                 if(in != -1)
-                    fprintf(stderr, "Client got unhandled char: %d (%c)\n", in, (char)in);
+                    log("Client got unhandled char: %d (%c)", in, (char)in);
             }
 END:
 
             refresh_screen();
 
+            glock.unlock();
             mlock.unlock();
         }
 
         endwin();
 
-        fprintf(stderr, "Client exiting normally\n");
+        log("Client exiting normally");
 
         // tell those threads to die
         SERVER_LOST = true;
@@ -1159,7 +1172,7 @@ END:
         thread_messageHandler.join();
         thread_getFull.join();
 
-        fprintf(stderr, "Client joined threads normally\n");
+        log("Client joined threads normally");
 
         return 0;
     }
