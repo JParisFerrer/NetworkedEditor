@@ -79,7 +79,7 @@ public:
   /*helpers*/
   void bufferMaker();
   size_t bufferLength();
-
+  void clear();
 
   /*debugging utilties*/
   void printDebug();

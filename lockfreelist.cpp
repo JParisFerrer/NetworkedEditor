@@ -851,6 +851,8 @@ size_t LockFreeList::deserialize(char* ibuf, size_t len)
     len /= 4;
     len -= 3;
 
+    // clear us
+    clear();
 
     size_t line = 0;
     size_t read = 0;
@@ -875,4 +877,40 @@ size_t LockFreeList::deserialize(char* ibuf, size_t len)
     }
 
     return line;
+}
+
+void LockFreeList::clear()
+{
+
+    BufferList * list;
+    BufferList* nlist;
+    bool ret = getLine(0, list);
+
+    while(list!=nullptr)
+    {
+        nlist = list->next;
+
+        Buffer* lineData=list->line;
+        Buffer* next = nullptr;
+        size_t printindex = 0;
+        while(lineData!=nullptr)
+        {
+            next = lineData->next;
+
+            delete lineData;
+
+            lineData = next;
+        }
+
+        delete list;
+
+        list = nlist;
+    }
+
+    head=new BufferList();
+
+    head->line= new Buffer();
+    head->lineCapacity+=BUFFERLEN;
+    head->lineLength=0;
+    dataLength = 1;
 }
