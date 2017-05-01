@@ -122,7 +122,8 @@ namespace server
         std::vector<int> ret;
 
         for(Client& c : clients)
-            ret.push_back(c.socket);
+            if(c.alive)
+                ret.push_back(c.socket);
 
         return ret;
     }
@@ -276,6 +277,15 @@ namespace server
                     // send a full to them
                     //log("got full request");
                     send_full_content(client_fd, text, false);
+
+                    break;
+                }
+
+                case PacketType::GetClientCount:
+                {
+                    log("sending client count of %lu", get_socket_list().size());
+
+                    send_client_count(client_fd, get_socket_list().size());
 
                     break;
                 }

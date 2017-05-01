@@ -37,7 +37,9 @@ enum class PacketType : short
     WriteConfirmed,
     ReadFromDisk,
     ReadConfirmed,
-    Disconnect
+    Disconnect,
+    GetClientCount,
+    ClientCount
 };
 
 static std::string PacketTypeNames[] = 
@@ -53,10 +55,12 @@ static std::string PacketTypeNames[] =
     "WriteConfirmed",
     "ReadFromDisk",
     "ReadConfirmed",
-    "Disconnect"
+    "Disconnect",
+    "GetClientCount",
+    "ClientCount"
 };
 
-static size_t PacketTypeNum = 11;
+static size_t PacketTypeNum = 14;
 
 #define log(...) \
     do { \
@@ -122,6 +126,10 @@ bool send_read(int sock, std::string filename);
 bool send_read_confirm(int sock, size_t lines, std::string filename);
 bool broadcast_read_confirm(const std::vector<int>& sockets, size_t lines, std::string filename);
 
+bool send_get_client_count(int sock);
+
+bool send_client_count(int sock, int num_clients);
+
 bool send_get_full(int sock);
 
 template <class T>
@@ -177,5 +185,6 @@ bool broadcast_full_content(const std::vector<int>& sockets, TextContainer<T>& t
 }
 
 bool broadcast_disconnect(const std::vector<int>& sockets);
+
 
 #endif

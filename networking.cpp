@@ -574,3 +574,51 @@ bool broadcast_disconnect(const std::vector<int>& sockets)
 
     return true;
 }
+
+
+
+bool send_get_client_count(int sock)
+{
+    size_t len = sizeof(short);
+    len = std::max((size_t)10, len);// for reasons, make this at least 10
+    char* buf = new char[len]();
+
+    *(short*)buf = htons((short)PacketType::GetClientCount);
+
+    bool ret = send_message(sock, buf, len);
+
+    if(!ret)
+    {
+        const char* c = __func__;
+        log("[!!!] [%s] bad return value", c);
+    }
+
+    delete [] buf;
+
+
+    return ret;
+}
+
+bool send_client_count(int sock, int num_clients)
+{
+    size_t len = sizeof(short) + sizeof(int);
+    len = std::max((size_t)10, len);// for reasons, make this at least 10
+    char* buf = new char[len]();
+
+    *(short*)buf = htons((short)PacketType::ClientCount);
+    *(int*)(buf + sizeof(short)) = htonl(num_clients);
+
+    bool ret = send_message(sock, buf, len);
+
+    if(!ret)
+    {
+        const char* c = __func__;
+        log("[!!!] [%s] bad return value", c);
+    }
+
+    delete [] buf;
+
+
+    return ret;
+
+}

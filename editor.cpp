@@ -646,7 +646,7 @@ namespace client
                     char* c;
 
                     asprintf(&c, "Saved file: %s", filename.c_str());
-                    print_in_cmd_window(c);
+                    print_in_cmd_window(c, 2);
                     free(c);        // I think it uses malloc
 
                     clear_cmd_window();
@@ -664,7 +664,7 @@ namespace client
                     char* c;
 
                     asprintf(&c, "Read file: %s [%lu lines]", filename.c_str(), linesread);
-                    print_in_cmd_window(c);
+                    print_in_cmd_window(c, 3);
                     free(c);        // I think it uses malloc
 
                     clear_cmd_window();
@@ -773,12 +773,27 @@ namespace client
                 // just a string
                 std::string dcmsg(msg.first + sizeof(short));
 
-                print_in_cmd_window(dcmsg.c_str());
+                print_in_cmd_window(dcmsg.c_str(), 3);
 
                 clear_cmd_window();
 
                 break;
             }   
+
+            case PacketType::ClientCount:
+            {
+                int num_clients = get_bytes_as<int>(msg.first, sizeof(short));
+
+                char* c;
+
+                asprintf(&c, "Client count: %d (%d including you)", num_clients-1, num_clients);
+                print_in_cmd_window(c, 2);
+                free(c);        // I think it uses malloc
+
+                clear_cmd_window();
+
+                break;
+            }
 
             default:
                 {
@@ -1055,6 +1070,12 @@ namespace client
                                     print_in_cmd_window("Bad # of args: ");
                                     print_in_cmd_window(std::to_string(v.size()).c_str());
                                 }
+                            }
+                            else if (v[0] == "cc")
+                            {
+                                // get client count
+
+                                send_get_client_count(SERVER_SOCKET);
                             }
 
                         }
