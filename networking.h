@@ -58,6 +58,16 @@ static std::string PacketTypeNames[] =
 
 static size_t PacketTypeNum = 11;
 
+#define log(...) \
+    do { \
+    std::chrono::system_clock::time_point now = std::chrono::system_clock::now(); \
+    std::time_t now_c = std::chrono::system_clock::to_time_t(now); \
+    char logcharbuf[4096]; \
+    std::strftime(logcharbuf, 4095, "%H:%M:%S", std::localtime(&now_c)); \
+    fprintf(stderr, "[%s] ", logcharbuf); \
+    fprintf(stderr, __VA_ARGS__); \
+    fprintf(stderr, "\n"); \
+    } while(0);
 
 uint64_t htonll(uint64_t value);
 
@@ -115,15 +125,16 @@ bool broadcast_read_confirm(const std::vector<int>& sockets, size_t lines, std::
 bool send_get_full(int sock);
 
 template <class T>
-bool send_full_content(int sock, TextContainer<T>& text)
+bool send_full_content(int sock, TextContainer<T>& text, bool forced)
 {
     std::pair<char*, size_t> ser = text.serialize();
 
-    size_t len = sizeof(short) + ser.second;
+    size_t len = sizeof(short) + sizeof(char) + ser.second;
     char* buf = new char[len]();
 
     *(short*)buf = htons((short)PacketType::FullContent);
-    memcpy(buf + sizeof(short), ser.first, ser.second);
+    *(char*)(buf + sizeof(short)) = (char)forced;
+    memcpy(buf + sizeof(short) + 1, ser.first, ser.second);
 
     bool ret = send_message(sock, buf, len);
 
@@ -138,15 +149,16 @@ bool send_full_content(int sock, TextContainer<T>& text)
 }
 
 template <class T>
-bool broadcast_full_content(const std::vector<int>& sockets, TextContainer<T>& text)
+bool broadcast_full_content(const std::vector<int>& sockets, TextContainer<T>& text, bool forced)
 {
     std::pair<char*, size_t> ser = text.serialize();
 
-    size_t len = sizeof(short) + ser.second;
+    size_t len = sizeof(short) + sizeof(char) + ser.second;
     char* buf = new char[len]();
 
     *(short*)buf = htons((short)PacketType::FullContent);
-    memcpy(buf + sizeof(short), ser.first, ser.second);
+    *(char*)(buf + sizeof(short)) = (char)forced;
+    memcpy(buf + sizeof(short) + 1, ser.first, ser.second);
 
     for(int sock : sockets)
     {

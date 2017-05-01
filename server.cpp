@@ -17,7 +17,7 @@ namespace server
 
     void sigterm_handler(int sig)
     {
-        fprintf(stderr, "Got SIGTERM\n");
+        log("Got SIGTERM");
         fclose(stderr);
         fclose(stdout);
 
@@ -42,7 +42,7 @@ namespace server
 
         if(ret)
         {
-            fprintf(stderr, "getaddrinfo failed: %s\n", gai_strerror(ret));
+            log("getaddrinfo failed: %s", gai_strerror(ret));
             return 1;
         }
 
@@ -81,7 +81,7 @@ namespace server
 
         if(trav == nullptr)
         {
-            fprintf(stderr, "Server failed to bind\n");
+            log("Server failed to bind");
             return 3;
         }
 
@@ -135,7 +135,7 @@ namespace server
         {
             if(c.id != ignore && c.alive)
             {
-                //fprintf(stderr, "Forwarded message from %d to %d (sock: %d)\n", ignore, c.id, c.socket);
+                //log("Forwarded message from %d to %d (sock: %d)", ignore, c.id, c.socket);
                 send_message(c.socket, msg.first, msg.second);
             }
         }
@@ -146,11 +146,11 @@ namespace server
     {
         std::lock_guard<std::mutex> m(clock);
 
-        fprintf(stderr, "Broadcasting to: \n");
+        log("Broadcasting to: ");
 
         for (Client& c : clients)
         {
-            fprintf(stderr, "\t id: %d, alive: %s, sock: %d\n", c.id, (c.alive ? "yes": " no"), c.socket);
+            log("\t id: %d, alive: %s, sock: %d", c.id, (c.alive ? "yes": " no"), c.socket);
             if(c.alive)
                 send_message(c.socket, buf, len);
         }
@@ -162,7 +162,7 @@ namespace server
         int client_fd = clients[client_idx].socket;
 
         //std::cout << "Thread starting up" << std::endl;
-        printf("Thread starting up for client %d on socket %d\n", clients[client_idx].id, client_fd);
+        printf("Thread starting up for client %d on socket %d", clients[client_idx].id, client_fd);
 
         // step 1 is to send the current text to them as data
 
@@ -176,7 +176,7 @@ namespace server
             // annoying here but used for the client code to not block
             if(msg.first == nullptr && msg.second > 0)
             {
-                fprintf(stderr, "[!!] Server had trouble reading message!\n");
+                log("[!!] Server had trouble reading message!");
                 break;
             }
             else if (msg.first == nullptr && msg.second == -1)
@@ -193,13 +193,13 @@ namespace server
 
             PacketType type = get_bytes_as<PacketType>(msg.first, 0);
 
-            //fprintf(stdout, "Got message of type %s\n", PacketTypeNames[(short)type].c_str());
+            //fprintf(stdout, "Got message of type %s", PacketTypeNames[(short)type].c_str());
 
             switch(type)
             {
                 case PacketType::Move:
                 {
-                    //fprintf(stdout, "Got move!\n");
+                    //fprintf(stdout, "Got move!");
                     size_t y, x;
                     y = get_bytes_as<size_t>(msg.first, sizeof(short));
                     x = get_bytes_as<size_t>(msg.first, sizeof(short) + sizeof(size_t));
@@ -211,7 +211,7 @@ namespace server
 
                 case PacketType::Insert:
                 {
-                    //fprintf(stdout, "Got insert!\n");
+                    //fprintf(stdout, "Got insert!");
 
                     size_t y, x;
                     int c;
@@ -229,7 +229,7 @@ namespace server
 
                 case PacketType::Remove:
                 {
-                    //fprintf(stdout, "Got remove!\n");
+                    //fprintf(stdout, "Got remove!");
 
                     size_t y, x;
                     y = get_bytes_as<size_t>(msg.first, sizeof(short));
@@ -247,7 +247,7 @@ namespace server
                     // rest of bytes are a filename
                     std::string filename(msg.first + sizeof(short));
 
-                    printf("Writing text to disk, into %s\n", filename.c_str());
+                    printf("Writing text to disk, into %s", filename.c_str());
 
                     text.writeToFile(filename);
 
@@ -266,7 +266,7 @@ namespace server
                     size_t lines = text.readFromFile(filename);
 
                     broadcast_read_confirm(get_socket_list(), lines, filename);
-                    broadcast_full_content(get_socket_list(), text);
+                    broadcast_full_content(get_socket_list(), text, true);
 
                     break;
                 }
@@ -274,15 +274,15 @@ namespace server
                 case PacketType::GetFull:
                 {
                     // send a full to them
-                    //fprintf(stderr, "got full request\n");
-                    send_full_content(client_fd, text);
+                    //log("got full request");
+                    send_full_content(client_fd, text, false);
 
                     break;
                 }
 
                 default:
 
-                    fprintf(stderr, "[!] Server got unhandled message type '%d'\n", type);
+                    log("[!] Server got unhandled message type '%d'", type);
                     break;
             }
 
@@ -292,14 +292,14 @@ namespace server
         }
 
         //std::cout << "Thread shutting down" << std::endl;
-        printf("Thread handling client %d (sock %d) shutting down\n", clients[client_idx].id, client_fd);
+        printf("Thread handling client %d (sock %d) shutting down", clients[client_idx].id, client_fd);
 
         broadcast_disconnect(get_socket_list());
 
         clients[client_idx].alive = false;
 
         // try to save the results
-        fprintf(stderr, "Server trying to save autosave file on exit: 'autosave.txt'\n");
+        log("Server trying to save autosave file on exit: 'autosave.txt'");
         text.writeToFile("autosave.txt");
 
         return (void*)(long)client_fd;
