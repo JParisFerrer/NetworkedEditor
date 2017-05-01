@@ -39,7 +39,8 @@ enum class PacketType : short
     ReadConfirmed,
     Disconnect,
     GetClientCount,
-    ClientCount
+    ClientCount,
+    NewClient
 };
 
 static std::string PacketTypeNames[] = 
@@ -57,10 +58,11 @@ static std::string PacketTypeNames[] =
     "ReadConfirmed",
     "Disconnect",
     "GetClientCount",
-    "ClientCount"
+    "ClientCount",
+    "NewClient"
 };
 
-static size_t PacketTypeNum = 14;
+static size_t PacketTypeNum = 15;
 
 #define log(...) \
     do { \
@@ -129,6 +131,8 @@ bool broadcast_read_confirm(const std::vector<int>& sockets, size_t lines, std::
 bool send_get_client_count(int sock);
 
 bool send_client_count(int sock, int num_clients);
+
+bool broadcast_new_client(const std::vector<int>& sockets);
 
 bool send_get_full(int sock);
 

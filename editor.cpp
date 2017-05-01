@@ -795,6 +795,20 @@ namespace client
                 break;
             }
 
+            case PacketType::NewClient:
+            {
+                // just a string
+                std::string dcmsg(msg.first + sizeof(short));
+
+                print_in_cmd_window(dcmsg.c_str(), 1);
+
+                clear_cmd_window();
+
+                break;
+
+                break;
+            }
+
             default:
                 {
                     log("Client got unhandled message type %d = %s", (short)type, ((short)type < PacketTypeNum ? PacketTypeNames[(short)type].c_str() : ""));

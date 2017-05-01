@@ -343,6 +343,8 @@ namespace server
                 return 5;
             }
 
+            broadcast_new_client(get_socket_list());
+
             clock.lock();
             clients.push_back(Client(client_fd));
             clock.unlock();

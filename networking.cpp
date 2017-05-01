@@ -622,3 +622,31 @@ bool send_client_count(int sock, int num_clients)
     return ret;
 
 }
+
+
+bool broadcast_new_client(const std::vector<int>& sockets)
+{
+    std::string msg = "New Client Connected!";
+
+    size_t len = sizeof(short) + msg.length() + 1;
+    len = std::max((size_t)10, len);// for reasons, make this at least 10
+    char* buf = new char[len]();
+
+    *(short*)buf = htons((short)PacketType::Disconnect);
+    memcpy(buf + sizeof(short), msg.c_str(), msg.length()+1);
+
+    for(int sock : sockets)
+    {
+        bool ret = send_message(sock, buf, len);
+
+        if(!ret)
+        {
+            const char* c = __func__;
+            log("[!!!] [%s] bad return value for client with sock %d", c, sock);
+        }
+    }
+
+    delete [] buf;
+
+    return true;
+}
