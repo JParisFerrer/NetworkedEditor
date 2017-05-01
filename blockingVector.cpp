@@ -78,6 +78,8 @@ void BlockingVector::remove(size_t line, size_t index){
     std::vector< std::vector<int> >::iterator itVert=this->data.begin();
 
     if( index== (size_t)-1){
+        log("delete line idx: %lu", line);
+
         if(line!=0) {
             if(line >= data.size())
             {
@@ -87,11 +89,6 @@ void BlockingVector::remove(size_t line, size_t index){
 
             if( data[line].size() > 0)
             {
-                if(index > data[line].size())
-                {
-                    fprintf(stderr, "[!!] bad index access! %lu > %lu\n", index, data[line].size());
-                    return;
-                }
                 auto itAbove=this->data[line-1].end();
                 data[line-1].insert(itAbove, itHorz,itHorzEnd);
                 data.erase(itVert+line);
