@@ -1,35 +1,33 @@
 #ifndef EDITOR_H
 #define EDITOR_H
 
+#include "blockingVector.h"
+#include "networking.h"
+#include "textcontainer.h"
+#include <arpa/inet.h>
+#include <cstdio>
+#include <cstdlib>
 #include <curses.h>
-#include <iostream>
-#include <sstream>
-#include <unistd.h>
-#include <signal.h>
 #include <errno.h>
+#include <iostream>
+#include <mutex>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <signal.h>
+#include <sstream>
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-#include <netdb.h>
-#include <cstdlib>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netinet/tcp.h>
-#include <vector>
-#include <cstdio>
-#include <mutex>
 #include <thread>
-#include "textcontainer.h"
-#include "blockingVector.h"
-#include "networking.h"
+#include <unistd.h>
+#include <vector>
 
+namespace client {
 
-namespace client
-{
+int client_entrypoint();
 
-    int client_entrypoint();
-
-    void exit_handler(int sigint);
-}
+void exit_handler(int sigint);
+} // namespace client
 
 #endif
