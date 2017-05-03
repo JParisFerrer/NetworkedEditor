@@ -127,7 +127,7 @@ std::pair<char*,size_t> get_message(int sock, bool block)
         if(SHUTDOWN_NETWORK)
             return std::make_pair(nullptr, 0);
 
-        //fprintf(stderr, "got: %ld\n", got);
+        //log("got: %ld", got);
 
         if(got == 0)
         {
@@ -144,7 +144,8 @@ std::pair<char*,size_t> get_message(int sock, bool block)
             {
                 char e[1024];
                 strerror_r(errno, e, 1024);
-                fprintf(stderr, "[%s] Retrying recv: %s\n", __func__, e);
+                const char* c = __func__;
+                log("[%s] Retrying recv: %s", c, e);
                 continue;
             }
 
@@ -161,7 +162,7 @@ std::pair<char*,size_t> get_message(int sock, bool block)
 
         if(got < 10 )
         {
-            fprintf(stderr, "[!] Got short message!!! %ld (%lu)\n", got, total_got);
+            log("[!] Got short message!!! %ld (%lu)", got, total_got);
             usleep(1000);
             continue;
         }
@@ -177,8 +178,8 @@ std::pair<char*,size_t> get_message(int sock, bool block)
             if(strncmp(t, tbuf, HEADER_LENGTH) != 0)
             {
                 // we didn't read a header
-                fprintf(stderr, "[!!!] Bad header read! Got '%s' expected '%s'\n", tbuf, t);
-                //fprintf(stderr, "[!!!] Bad header read! Got '%d' expected '%d'\n", tbuf[0], t[0]);
+                log("[!!!] Bad header read! Got '%s' expected '%s'", tbuf, t);
+                //log("[!!!] Bad header read! Got '%d' expected '%d'", tbuf[0], t[0]);
 
                 return std::make_pair(nullptr, 1);
             }
@@ -231,13 +232,13 @@ std::pair<char*,size_t> get_message(int sock, bool block)
         // now remove those bytes from the read queue, this should leave the next header right there to read
         recv(sock, garbage, got, 0);
 
-        //fprintf(stderr, "Reading more data\n");
+        //log("Reading more data");
 
     }
 
     free(tbuf);
 
-    fprintf(stderr, "[!] Exited loop in get_message\n");
+    log("[!] Exited loop in get_message");
 
     return std::make_pair(retbuf + HEADER_LENGTH, total_got - HEADER_LENGTH);
 }
@@ -294,7 +295,7 @@ bool send_message(int sock, char* buf, size_t num_bytes)
         {
             if(sent < 10)
             {
-                fprintf(stderr, "[!] Sent short message!\n");
+                log("[!] Sent short message!");
             }
             total_sent += sent;
             left -= sent;
@@ -324,7 +325,8 @@ bool send_move(int sock, size_t y, size_t x)
 
     if(!ret)
     {
-        fprintf(stderr, "[!!!] [%s] Bad return value\n", __func__);
+        const char* c = __func__;
+        log("[!!!] [%s] Bad return value", c);
     }
 
     delete [] buf;
@@ -345,7 +347,8 @@ bool send_insert(int sock, size_t y, size_t x, int c)
 
     if(!ret)
     {
-        fprintf(stderr, "[!!!] [%s] Bad return value\n", __func__);
+        const char* c = __func__;
+        log("[!!!] [%s] Bad return value", c);
     }
 
     delete [] buf;
@@ -367,7 +370,8 @@ bool send_remove(int sock, size_t y, size_t x)
 
     if(!ret)
     {
-        fprintf(stderr, "[!!!] [%s] Bad return value\n", __func__);
+        const char*c = __func__;
+        log("[!!!] [%s] Bad return value", c);
     }
 
     delete [] buf;
@@ -387,7 +391,10 @@ bool send_write(int sock, std::string filename)
     bool ret = send_message(sock, buf, len);
 
     if(!ret)
-        fprintf(stderr, "[!!!] [%s] bad return value\n", __func__);
+    {
+        const char*c = __func__;
+        log("[!!!] [%s] bad return value", c);
+    }
 
     delete [] buf;
 
@@ -396,7 +403,8 @@ bool send_write(int sock, std::string filename)
 
 bool send_write_confirm(int sock, std::string filename)
 {
-    fprintf(stderr, "%s\n", __func__);
+    const char*c = __func__;
+    log("%s", c);
     size_t len = sizeof(short) + filename.length() + 1;
     len = std::max((size_t)10, len);// for reasons, make this at least 10
     char* buf = new char[len]();
@@ -407,7 +415,10 @@ bool send_write_confirm(int sock, std::string filename)
     bool ret = send_message(sock, buf, len);
 
     if(!ret)
-        fprintf(stderr, "[!!!] [%s] bad return value\n", __func__);
+    {
+        const char* c = __func__;
+        log("[!!!] [%s] bad return value", c);
+    }
 
     delete [] buf;
 
@@ -428,7 +439,10 @@ bool broadcast_write_confirm(std::vector<int> sockets, std::string filename)
         bool ret = send_message(sock, buf, len);
 
         if(!ret)
-            fprintf(stderr, "[!!!] [%s] bad return value for client with sock %d\n", __func__, sock);
+        {
+            const char*c = __func__;
+            log("[!!!] [%s] bad return value for client with sock %d", c, sock);
+        }
     }
 
     delete [] buf;
@@ -448,7 +462,10 @@ bool send_read(int sock, std::string filename)
     bool ret = send_message(sock, buf, len);
 
     if(!ret)
-        fprintf(stderr, "[!!!] [%s] bad return value\n", __func__);
+    {
+        const char* c = __func__;
+        log("[!!!] [%s] bad return value", c);
+    }
 
     delete [] buf;
 
@@ -468,7 +485,10 @@ bool send_read_confirm(int sock, size_t lines, std::string filename)
     bool ret = send_message(sock, buf, len);
 
     if(!ret)
-        fprintf(stderr, "[!!!] [%s] bad return value\n", __func__);
+    {
+        const char*c = __func__;
+        log("[!!!] [%s] bad return value", c);
+    }
 
     delete [] buf;
 
@@ -490,7 +510,11 @@ bool broadcast_read_confirm(const std::vector<int> & sockets, size_t lines, std:
         bool ret = send_message(sock, buf, len);
 
         if(!ret)
-            fprintf(stderr, "[!!!] [%s] bad return value for client with sock %d\n", __func__, sock);
+        {
+            //log("[!!!] [%s] bad return value for client with sock %d", __func__, sock);
+            const char* c = __func__;
+            log("[!!!] [%s] bad return value for client with sock %d", c, sock);
+        }
     }
 
     delete [] buf;
@@ -500,6 +524,7 @@ bool broadcast_read_confirm(const std::vector<int> & sockets, size_t lines, std:
 
 bool send_get_full(int sock)
 {
+    log("requesting full");
     
     size_t len = sizeof(short);
     len = std::max((size_t)10, len);// for reasons, make this at least 10
@@ -510,9 +535,15 @@ bool send_get_full(int sock)
     bool ret = send_message(sock, buf, len);
 
     if(!ret)
-        fprintf(stderr, "[!!!] [%s] bad return value\n", __func__);
+    {
+        //log("[!!!] [%s] bad return value for client with sock %d", __func__, sock);
+        const char* c = __func__;
+        log("[!!!] [%s] bad return value for client with sock %d", c, sock);
+    }
 
     delete [] buf;
+
+    log("requested full");
 
     return ret;
 
