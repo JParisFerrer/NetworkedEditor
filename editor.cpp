@@ -162,7 +162,7 @@ namespace client
         //    text.print(lineoffset + y, maxx);
         //}
 
-        text.print(mainWindow, lineoffset, maxx);
+        text.print(mainWindow, lineoffset, maxx, maxy-1);
 
         for(int x = 0; x < commands.size(); x++)
         {

@@ -170,7 +170,7 @@ size_t BlockingVector::readFromFile(std::string fileName){
     return data.size();
 }
 
-void BlockingVector::print(WINDOW* win, size_t line,size_t maxWidth){
+void BlockingVector::print(WINDOW* win, size_t line,size_t maxWidth, size_t maxHeight){
     std::lock_guard<std::mutex> lock(vectorLock);
 
     size_t index = 0;
@@ -178,7 +178,7 @@ void BlockingVector::print(WINDOW* win, size_t line,size_t maxWidth){
 
     wclear(win);
 
-    for(size_t i = line; i < this->data.size(); i++, index++){
+    for(size_t i = line; i < line + maxHeight; i++, index++){
         // clear screen
         //wmove(win, index, 0);
         //waddstr(win, "                                                                                                                                                 ");   // clear line

@@ -293,7 +293,7 @@ namespace server
 
                 default:
 
-                    log("[!] Server got unhandled message type '%d'", type);
+                    log("[!] Server got unhandled message type '%s' (%d)", ((short)type < PacketTypeNum ? PacketTypeNames[(short)type].c_str() : ""), (short)type);
                     break;
             }
 

@@ -636,7 +636,7 @@ void LockFreeList::move(size_t line, size_t index){
 
 }
 
-void LockFreeList::print(WINDOW* win, size_t line,size_t maxWidth){
+void LockFreeList::print(WINDOW* win, size_t line,size_t maxWidth, size_t maxHeight){
 
     // LockFreeList* t = this;
     //
@@ -681,6 +681,9 @@ void LockFreeList::print(WINDOW* win, size_t line,size_t maxWidth){
     wclear(win);
     size_t index = 0;
     while(list!=nullptr){
+        if(index >= maxHeight)
+            break;
+
         wmove(win, index, 0);
         //waddstr(mainWindow, "                                                                                                                                    ");
 
