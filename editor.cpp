@@ -700,6 +700,7 @@ namespace client
                     if(force)
                     {
                         log("[!] got a forced update!");
+                        lineoffset = 0;
                     }
                     else if(modifiedTextSinceUpdate)
                     {
@@ -881,7 +882,7 @@ namespace client
     {
         while(!SERVER_LOST && !SHUTDOWN_NETWORK)
         {
-            sleep(1);
+            sleep(4);
             modifiedTextSinceUpdate = false;
             send_get_full(SERVER_SOCKET);
         }
