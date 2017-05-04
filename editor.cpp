@@ -701,6 +701,7 @@ namespace client
                     {
                         log("[!] got a forced update!");
                         lineoffset = 0;
+                        move_win_rel(mainWindow, -999999999, -999999999);
                     }
                     else if(modifiedTextSinceUpdate)
                     {
@@ -715,6 +716,11 @@ namespace client
 
                     // rest of it is serialized thing
                     size_t lines = text.deserialize(msg.first + sizeof(short) + 1, msg.second - sizeof(short));
+
+                    if(lines >= lineoffset)
+                    {
+                        lineoffset = 0;
+                    }
 
                     numlines = lines;
 
