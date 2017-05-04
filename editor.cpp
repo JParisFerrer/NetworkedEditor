@@ -212,7 +212,7 @@ namespace client
                 capped_y = 0;
             }
 
-            capped_x = std::min((ssize_t)(x + xoffs), (ssize_t)text.line_width(capped_y));
+            capped_x = std::min((ssize_t)(x + xoffs), (ssize_t)text.line_width(capped_y + lineoffset));
 
             if(capped_x < 0)
                 capped_x = 0;
@@ -1171,8 +1171,8 @@ namespace client
                     if(y > 0 && currWindow == mainWindow)
                     {
                         // save width of line above us
-                        size_t above_width = text.line_width(y-1);
-                        size_t us_width = text.line_width(y);
+                        size_t above_width = text.line_width(y + lineoffset -1);
+                        size_t us_width = text.line_width(y + lineoffset);
 
                         // get the container to remove the line
                         //text.remove(y+lineoffset, -1);
@@ -1204,7 +1204,7 @@ namespace client
                     goto END;
                 }
 
-                if(x < text.line_width(y))
+                if(x < text.line_width(y + lineoffset))
                 {
                     //data[y][x] = ' ';
                     //data[y].erase(data[y].begin() + x);
@@ -1217,8 +1217,8 @@ namespace client
                     if(y < numlines-1)
                     {
                         // save width of line above us
-                        size_t below_width = text.line_width(y+1);
-                        size_t us_width = text.line_width(y);
+                        size_t below_width = text.line_width(y + lineoffset +1);
+                        size_t us_width = text.line_width(y + lineoffset);
 
                         // get the container to remove the line
                         //text.remove(y+lineoffset+1, -1);
