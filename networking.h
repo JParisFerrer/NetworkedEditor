@@ -144,7 +144,7 @@ bool send_get_full(int sock);
 template <class T>
 bool send_full_content(int sock, TextContainer<T>& text, bool forced)
 {
-    log("sending full content");
+    //log("sending full content");
 
     std::pair<char*, size_t> ser = text.serialize();
 
@@ -165,7 +165,7 @@ bool send_full_content(int sock, TextContainer<T>& text, bool forced)
 
     free(ser.first);
 
-    log("sent full content");
+    //log("sent full content");
 
     return ret;
 }
@@ -173,7 +173,7 @@ bool send_full_content(int sock, TextContainer<T>& text, bool forced)
 template <class T>
 bool broadcast_full_content(const std::vector<int>& sockets, TextContainer<T>& text, bool forced)
 {
-    log("broadcasting full content");
+    //log("broadcasting full content");
 
     std::pair<char*, size_t> ser = text.serialize();
 
@@ -199,7 +199,7 @@ bool broadcast_full_content(const std::vector<int>& sockets, TextContainer<T>& t
 
     free(ser.first);
 
-    log("broadcasted full content");
+    //log("broadcasted full content");
 
     return true;
 
