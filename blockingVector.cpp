@@ -178,7 +178,7 @@ void BlockingVector::print(WINDOW* win, size_t line,size_t maxWidth, size_t maxH
 
     wclear(win);
 
-    for(size_t i = line; i < line + maxHeight; i++, index++){
+    for(size_t i = line; i < std::min(this->data.size(), line + maxHeight); i++, index++){
         // clear screen
         //wmove(win, index, 0);
         //waddstr(win, "                                                                                                                                                 ");   // clear line
