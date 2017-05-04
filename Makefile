@@ -3,6 +3,11 @@ LDFLAGS = -std=c++11 -lncurses -lpthread
 CXXFLAGS = -std=c++11 -c -g -O0
 EXENAME = editor
 
+ifeq ($(LOCKFREE), 1)
+CXXFLAGS += -DLOCKFREE
+LDFLAGS += -DLOCKFREE
+endif
+
 all: $(EXENAME)
 
 $(EXENAME) : main.o editor.o server.o textcontainer.cpp textcontainer.h blockingVector.o lockfreelist.o networking.o

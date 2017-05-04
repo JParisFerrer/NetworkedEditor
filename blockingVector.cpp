@@ -46,13 +46,13 @@ void BlockingVector::insert(size_t line, size_t index, int input){
 
     if(line >= data.size())
     {
-        fprintf(stderr, "[!!] bad line access! %lu >= %lu\n", line, data.size());
+        log("[!!] bad line access! %lu >= %lun", line, data.size());
         return;
     }
 
     if(index > data[line].size())
     {
-        fprintf(stderr, "[!!] bad index access! %lu > %lu\n", index, data[line].size());
+        log("[!!] bad index access! %lu > %lun", index, data[line].size());
         return;
     }
 
@@ -83,7 +83,7 @@ void BlockingVector::remove(size_t line, size_t index){
         if(line!=0) {
             if(line >= data.size())
             {
-                fprintf(stderr, "[!!] bad line access! %lu >= %lu\n", line, data.size());
+                log("[!!] bad line access! %lu >= %lun", line, data.size());
                 return;
             }
 
@@ -103,13 +103,13 @@ void BlockingVector::remove(size_t line, size_t index){
     else{
         if(line >= data.size())
         {
-            fprintf(stderr, "[!!] bad line access! %lu >= %lu\n", line, data.size());
+            log("[!!] bad line access! %lu >= %lun", line, data.size());
             return;
         }
 
         if(index > data[line].size())
         {
-            fprintf(stderr, "[!!] bad index access! %lu > %lu\n", index, data[line].size());
+            log("[!!] bad index access! %lu > %lun", index, data[line].size());
             return;
         }
 
@@ -237,7 +237,7 @@ void BlockingVector::printColored(WINDOW* win, std::string text)
     bool any = false;
     for(auto r : keywords)
     {
-        //fprintf(stderr, "started matching\n");
+        //log("started matchingn");
         std::smatch m;
         try
         {
@@ -254,7 +254,7 @@ void BlockingVector::printColored(WINDOW* win, std::string text)
                     // m.position(i) is index into text that the match starts at
                     // m.length(i) is length of the match
 
-                    //fprintf(stderr, "got match '%s' at index %d, pos %ld and len %ld\n", m[i].str().c_str(), i, m.position(i), m.length(i));
+                    //log("got match '%s' at index %d, pos %ld and len %ldn", m[i].str().c_str(), i, m.position(i), m.length(i));
 
                     std::string trimmed = m[i].str();
                     trim(trimmed);
@@ -285,11 +285,11 @@ void BlockingVector::printColored(WINDOW* win, std::string text)
             std::cerr << e.what() << std::endl;
         }
 
-        //fprintf(stderr, "done matching\n");
+        //log("done matching");
     }
 
     if(any);
-        //fprintf(stderr, "\n");
+        //log("");
 
     // print everything
     size_t y = 0;

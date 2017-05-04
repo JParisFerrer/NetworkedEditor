@@ -135,7 +135,8 @@ else{
         bool ret = getLine(line, insertPoint);
 
         if(!ret ) {
-            fprintf(stderr, "[!!] Bad line of %lu (max len: %lu) in %s\n", line, dataLength * CHARBUFFER, __func__);
+            const char* c = __func__;
+            log( "[!!] Bad line of %lu (max len: %lu) in %s", line, dataLength * CHARBUFFER, c);
             return ;
         }
 
@@ -197,7 +198,8 @@ else{
         bool ret = getLine(line, insertPoint);
 
         if(!ret ) {
-            fprintf(stderr, "[!!] Bad line of %lu (max len: %lu) in %s\n", line, dataLength * CHARBUFFER, __func__);
+            const char* c = __func__;
+            log("[!!] Bad line of %lu (max len: %lu) in %s", line, dataLength * CHARBUFFER, c);
             return ;
         }
 
@@ -337,7 +339,7 @@ void LockFreeList::insertIntoLine(BufferList* line,size_t index, int c)
             lastBuffer=currLine;
         }
         for ( i = 0; i < BUFFERLEN; i++) {
-            fprintf(stderr, "i:%lu curr:%d\n", i, currIndex);
+            //fprintf(stderr, "i:%lu curr:%d\n", i, currIndex);
             if (currIndex==index) {
                 //std::cout<< "SHOULD WORK";
                 //currLine->buffer[i]=c;
@@ -360,7 +362,7 @@ void LockFreeList::insertIntoLine(BufferList* line,size_t index, int c)
         currLine=currLine->next;
     }
         // std::cout<< currIndex<<" "<<index<<std::endl;
-    fprintf(stderr, "curr: %d, want: %lu, inserted:%d\n", currIndex, index, inserted);
+    //fprintf(stderr, "curr: %d, want: %lu, inserted:%d\n", currIndex, index, inserted);
 
     // if we hit the end of the line, add it there
     if(!inserted){
@@ -399,11 +401,11 @@ void LockFreeList::insertIntoLine(BufferList* line,size_t index, int c)
             Buffer* newbuf = new Buffer();
             for (int i = buffOff, ii = 0; i < BUFFERLEN; i++, ii++)
             {
-                fprintf(stderr, "added %c from %d->%d\n", currLine->buffer[i], i, ii);
+                //fprintf(stderr, "added %c from %d->%d\n", currLine->buffer[i], i, ii);
                 newbuf->buffer[ii] = currLine->buffer[i];
             }
 
-            fprintf(stderr, "memset from %d for len %d\n", buffOff, BUFFERLEN - buffOff);
+            //fprintf(stderr, "memset from %d for len %d\n", buffOff, BUFFERLEN - buffOff);
             for( int i = buffOff; i < BUFFERLEN; i++)
                 currLine->buffer[i] = UNUSEDINT;
             //memset(currLine->buffer + buffOff, UNUSEDINT, BUFFERLEN - buffOff);
@@ -414,7 +416,7 @@ void LockFreeList::insertIntoLine(BufferList* line,size_t index, int c)
             Buffer* p = line->line;
             while(p != nullptr)
             {
-                fprintf(stderr, "%p, ", p);
+                //fprintf(stderr, "%p, ", p);
                 p = p->next;
             }
         }
@@ -501,7 +503,8 @@ bool LockFreeList::getLine(size_t line, BufferList*& currentLine)
 {
     BufferList* traverser=head;
     if (traverser==nullptr) {
-        fprintf(stderr, "[%s] Head did not exist", __func__ );
+        const char* c = __func__;
+        log("[%s] Head did not exist", c );
         return false;
     }
     int i=0;
@@ -537,7 +540,8 @@ size_t LockFreeList::line_width(size_t line) {
     }
     else
     {
-        fprintf(stderr, "[%s] Bad line %lu \n", __func__, line);
+        const char* c = __func__;
+        log( "[%s] Bad line %lu \n", c, line);
     }
 }
 
@@ -594,7 +598,8 @@ void LockFreeList::remove(size_t line, size_t index){
     {
         bool ret = getLine(line, removePoint);
         if(!ret ) {
-            fprintf(stderr, "[!!] Bad line of %lu (max len: %lu) in %s\n", line, dataLength * CHARBUFFER, __func__);
+            const char* c = __func__;
+            log("[!!] Bad line of %lu (max len: %lu) in %s\n", line, dataLength * CHARBUFFER, c);
             return ;
         }
         //std::cout<<"should remove";
@@ -668,7 +673,8 @@ void LockFreeList::print(WINDOW* win, size_t line,size_t maxWidth){
 
     if(!ret)
     {
-        fprintf(stderr, "%s bad line index %lu\n", __func__, line);
+        const char* c = __func__;
+        log("%s bad line index %lu\n", c, line);
         return;
     }
 
