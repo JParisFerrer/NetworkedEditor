@@ -720,7 +720,7 @@ namespace client
                     int y, x;
                     getyx(mainWindow, y, x);
 
-                    if(lineoffset + y <= lines)
+                    if(lineoffset + y >= lines)
                     {
                         lineoffset = 0;
                     }
