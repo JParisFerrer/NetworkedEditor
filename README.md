@@ -26,5 +26,7 @@ If -a is set, a server is not launched, unless --server is also specified.
 # More Details
    - Compiling this editor requires g++ 4.9 or above due to the use of C++11 regex. 
    - Compiling this editor requires ncurses to be installed.
+   - To use the lockfree version, you must enable it at compile time:
+       - `make clean && make LOCKFREE=1`
    - This uses ncurses default coloring system, so make sure your terminal supports colors to see the syntax highlighting
    - The default port is 29629, so make sure this isn't blocked
