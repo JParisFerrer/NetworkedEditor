@@ -717,7 +717,7 @@ namespace client
                     // rest of it is serialized thing
                     size_t lines = text.deserialize(msg.first + sizeof(short) + 1, msg.second - sizeof(short));
 
-                    if(lines >= lineoffset)
+                    if(lines <= lineoffset)
                     {
                         lineoffset = 0;
                     }
