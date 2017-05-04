@@ -888,7 +888,7 @@ namespace client
     {
         while(!SERVER_LOST && !SHUTDOWN_NETWORK)
         {
-            sleep(4);
+            sleep(10);
             modifiedTextSinceUpdate = false;
             send_get_full(SERVER_SOCKET);
         }
