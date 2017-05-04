@@ -788,6 +788,17 @@ namespace client
                                 numdisplaylines--;
                             numlines--;
 
+                            int cy, cx;
+                            getyx(mainWindow, cy, cx);
+
+                            if(lineoffset + cy >= numlines)
+                            {
+                                lineoffset = numlines - cy;
+
+                                if(lineoffset < 0)
+                                    lineoffset = 0;
+
+                            }
                             //move_win_rel(mainWindow, above_width, -1);
                     }
                     text.remove(y, x);
@@ -796,44 +807,44 @@ namespace client
                 }
 
             case PacketType::Disconnect:
-            {
-                
-                // just a string
-                std::string dcmsg(msg.first + sizeof(short));
+                {
 
-                print_in_cmd_window(dcmsg.c_str(), 3);
+                    // just a string
+                    std::string dcmsg(msg.first + sizeof(short));
 
-                clear_cmd_window();
+                    print_in_cmd_window(dcmsg.c_str(), 3);
 
-                break;
-            }   
+                    clear_cmd_window();
+
+                    break;
+                }   
 
             case PacketType::ClientCount:
-            {
-                int num_clients = get_bytes_as<int>(msg.first, sizeof(short));
+                {
+                    int num_clients = get_bytes_as<int>(msg.first, sizeof(short));
 
-                char* c;
+                    char* c;
 
-                asprintf(&c, "Client count: %d (%d including you)", num_clients-1, num_clients);
-                print_in_cmd_window(c, 2);
-                free(c);        // I think it uses malloc
+                    asprintf(&c, "Client count: %d (%d including you)", num_clients-1, num_clients);
+                    print_in_cmd_window(c, 2);
+                    free(c);        // I think it uses malloc
 
-                clear_cmd_window();
+                    clear_cmd_window();
 
-                break;
-            }
+                    break;
+                }
 
             case PacketType::NewClient:
-            {
-                // just a string
-                std::string dcmsg(msg.first + sizeof(short));
+                {
+                    // just a string
+                    std::string dcmsg(msg.first + sizeof(short));
 
-                print_in_cmd_window(dcmsg.c_str(), 1);
+                    print_in_cmd_window(dcmsg.c_str(), 1);
 
-                clear_cmd_window();
+                    clear_cmd_window();
 
-                break;
-            }
+                    break;
+                }
 
             default:
                 {
