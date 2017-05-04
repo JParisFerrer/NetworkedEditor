@@ -370,7 +370,7 @@ bool send_remove(int sock, size_t y, size_t x)
 
     if(!ret)
     {
-        const char*c = __func__;
+        const char* c = __func__;
         log("[!!!] [%s] Bad return value", c);
     }
 
@@ -392,7 +392,7 @@ bool send_write(int sock, std::string filename)
 
     if(!ret)
     {
-        const char*c = __func__;
+        const char* c = __func__;
         log("[!!!] [%s] bad return value", c);
     }
 
@@ -403,7 +403,7 @@ bool send_write(int sock, std::string filename)
 
 bool send_write_confirm(int sock, std::string filename)
 {
-    const char*c = __func__;
+    const char* c = __func__;
     log("%s", c);
     size_t len = sizeof(short) + filename.length() + 1;
     len = std::max((size_t)10, len);// for reasons, make this at least 10
@@ -440,7 +440,7 @@ bool broadcast_write_confirm(std::vector<int> sockets, std::string filename)
 
         if(!ret)
         {
-            const char*c = __func__;
+            const char* c = __func__;
             log("[!!!] [%s] bad return value for client with sock %d", c, sock);
         }
     }
@@ -486,7 +486,7 @@ bool send_read_confirm(int sock, size_t lines, std::string filename)
 
     if(!ret)
     {
-        const char*c = __func__;
+        const char* c = __func__;
         log("[!!!] [%s] bad return value", c);
     }
 
@@ -511,7 +511,6 @@ bool broadcast_read_confirm(const std::vector<int> & sockets, size_t lines, std:
 
         if(!ret)
         {
-            //log("[!!!] [%s] bad return value for client with sock %d", __func__, sock);
             const char* c = __func__;
             log("[!!!] [%s] bad return value for client with sock %d", c, sock);
         }
@@ -549,3 +548,105 @@ bool send_get_full(int sock)
 
 }
 
+bool broadcast_disconnect(const std::vector<int>& sockets)
+{
+    std::string msg = "Client disconnected!";
+
+    size_t len = sizeof(short) + msg.length() + 1;
+    len = std::max((size_t)10, len);// for reasons, make this at least 10
+    char* buf = new char[len]();
+
+    *(short*)buf = htons((short)PacketType::Disconnect);
+    memcpy(buf + sizeof(short), msg.c_str(), msg.length()+1);
+
+    for(int sock : sockets)
+    {
+        bool ret = send_message(sock, buf, len);
+
+        if(!ret)
+        {
+            const char* c = __func__;
+            log("[!!!] [%s] bad return value for client with sock %d", c, sock);
+        }
+    }
+
+    delete [] buf;
+
+    return true;
+}
+
+
+
+bool send_get_client_count(int sock)
+{
+    size_t len = sizeof(short);
+    len = std::max((size_t)10, len);// for reasons, make this at least 10
+    char* buf = new char[len]();
+
+    *(short*)buf = htons((short)PacketType::GetClientCount);
+
+    bool ret = send_message(sock, buf, len);
+
+    if(!ret)
+    {
+        const char* c = __func__;
+        log("[!!!] [%s] bad return value", c);
+    }
+
+    delete [] buf;
+
+
+    return ret;
+}
+
+bool send_client_count(int sock, int num_clients)
+{
+    size_t len = sizeof(short) + sizeof(int);
+    len = std::max((size_t)10, len);// for reasons, make this at least 10
+    char* buf = new char[len]();
+
+    *(short*)buf = htons((short)PacketType::ClientCount);
+    *(int*)(buf + sizeof(short)) = htonl(num_clients);
+
+    bool ret = send_message(sock, buf, len);
+
+    if(!ret)
+    {
+        const char* c = __func__;
+        log("[!!!] [%s] bad return value", c);
+    }
+
+    delete [] buf;
+
+
+    return ret;
+
+}
+
+
+bool broadcast_new_client(const std::vector<int>& sockets)
+{
+    std::string msg = "New Client Connected!";
+
+    size_t len = sizeof(short) + msg.length() + 1;
+    len = std::max((size_t)10, len);// for reasons, make this at least 10
+    char* buf = new char[len]();
+
+    *(short*)buf = htons((short)PacketType::Disconnect);
+    memcpy(buf + sizeof(short), msg.c_str(), msg.length()+1);
+
+    for(int sock : sockets)
+    {
+        bool ret = send_message(sock, buf, len);
+
+        if(!ret)
+        {
+            const char* c = __func__;
+            log("[!!!] [%s] bad return value for client with sock %d", c, sock);
+        }
+    }
+
+    delete [] buf;
+
+    return true;
+}

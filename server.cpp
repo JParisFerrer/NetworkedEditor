@@ -57,8 +57,8 @@ namespace server
                 continue;
             }
 
-            if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1 //|| 
-                    //setsockopt(socket_fd, IPPROTO_TCP, TCP_NODELAY, (void*)&yes, sizeof(int)) == -1
+            if (setsockopt(socket_fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1 || 
+                    setsockopt(socket_fd, IPPROTO_TCP, TCP_NODELAY, (void*)&yes, sizeof(int)) == -1
                     || setsockopt(socket_fd, SOL_SOCKET, SO_KEEPALIVE, &yes, sizeof(int)) == -1 
                 )
             {
@@ -122,7 +122,8 @@ namespace server
         std::vector<int> ret;
 
         for(Client& c : clients)
-            ret.push_back(c.socket);
+            if(c.alive)
+                ret.push_back(c.socket);
 
         return ret;
     }
@@ -175,7 +176,7 @@ namespace server
 
             // returns non-zero in second arg if it was error, else just no data
             // annoying here but used for the client code to not block
-            if(msg.first == nullptr && msg.second)
+            if(msg.first == nullptr && msg.second > 0)
             {
                 log("[!!] Server had trouble reading message!");
                 break;
@@ -194,7 +195,7 @@ namespace server
 
             PacketType type = get_bytes_as<PacketType>(msg.first, 0);
 
-            log("Got message of type %s", PacketTypeNames[(short)type].c_str());
+            //fprintf(stdout, "Got message of type %s", PacketTypeNames[(short)type].c_str());
 
             switch(type)
             {
@@ -267,7 +268,7 @@ namespace server
                     size_t lines = text.readFromFile(filename);
 
                     broadcast_read_confirm(get_socket_list(), lines, filename);
-                    broadcast_full_content(get_socket_list(), text);
+                    broadcast_full_content(get_socket_list(), text, true);
 
                     break;
                 }
@@ -276,7 +277,16 @@ namespace server
                 {
                     // send a full to them
                     //log("got full request");
-                    send_full_content(client_fd, text);
+                    send_full_content(client_fd, text, false);
+
+                    break;
+                }
+
+                case PacketType::GetClientCount:
+                {
+                    log("sending client count of %lu", get_socket_list().size());
+
+                    send_client_count(client_fd, get_socket_list().size());
 
                     break;
                 }
@@ -294,6 +304,8 @@ namespace server
 
         //std::cout << "Thread shutting down" << std::endl;
         printf("Thread handling client %d (sock %d) shutting down", clients[client_idx].id, client_fd);
+
+        broadcast_disconnect(get_socket_list());
 
         clients[client_idx].alive = false;
 
@@ -326,11 +338,13 @@ namespace server
             }
 
             int yes = 1, no = 0;
-            if (setsockopt(client_fd, IPPROTO_TCP, TCP_NODELAY, (void*)&no, sizeof(int)) == -1)
+            if (setsockopt(client_fd, IPPROTO_TCP, TCP_NODELAY, (void*)&yes, sizeof(int)) == -1)
             {
                 perror("setsockopt");
                 return 5;
             }
+
+            broadcast_new_client(get_socket_list());
 
             clock.lock();
             clients.push_back(Client(client_fd));

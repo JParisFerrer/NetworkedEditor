@@ -19,6 +19,7 @@
 #include <cstdio>
 #include <mutex>
 #include <thread>
+#include <pthread.h>
 #include "textcontainer.h"
 #include "blockingVector.h"
 #include "networking.h"

@@ -1,5 +1,6 @@
 #ifndef NETWORKING_H
 #define NETWORKING_H
+
 #include <vector>
 #include <cstdlib>
 #include <algorithm>
@@ -40,7 +41,11 @@ enum class PacketType : short
     WriteToDisk,
     WriteConfirmed,
     ReadFromDisk,
-    ReadConfirmed
+    ReadConfirmed,
+    Disconnect,
+    GetClientCount,
+    ClientCount,
+    NewClient
 };
 
 static std::string PacketTypeNames[] = 
@@ -55,10 +60,14 @@ static std::string PacketTypeNames[] =
     "WriteToDisk",
     "WriteConfirmed",
     "ReadFromDisk",
-    "ReadConfirmed"
+    "ReadConfirmed",
+    "Disconnect",
+    "GetClientCount",
+    "ClientCount",
+    "NewClient"
 };
 
-static size_t PacketTypeNum = 11;
+static size_t PacketTypeNum = 15;
 
 #define log(...) \
     do { \
@@ -124,20 +133,27 @@ bool send_read(int sock, std::string filename);
 bool send_read_confirm(int sock, size_t lines, std::string filename);
 bool broadcast_read_confirm(const std::vector<int>& sockets, size_t lines, std::string filename);
 
+bool send_get_client_count(int sock);
+
+bool send_client_count(int sock, int num_clients);
+
+bool broadcast_new_client(const std::vector<int>& sockets);
+
 bool send_get_full(int sock);
 
 template <class T>
-bool send_full_content(int sock, TextContainer<T>& text)
+bool send_full_content(int sock, TextContainer<T>& text, bool forced)
 {
     log("sending full content");
 
     std::pair<char*, size_t> ser = text.serialize();
 
-    size_t len = sizeof(short) + ser.second;
+    size_t len = sizeof(short) + sizeof(char) + ser.second;
     char* buf = new char[len]();
 
     *(short*)buf = htons((short)PacketType::FullContent);
-    memcpy(buf + sizeof(short), ser.first, ser.second);
+    *(char*)(buf + sizeof(short)) = (char)forced;
+    memcpy(buf + sizeof(short) + 1, ser.first, ser.second);
 
     bool ret = send_message(sock, buf, len);
 
@@ -155,17 +171,18 @@ bool send_full_content(int sock, TextContainer<T>& text)
 }
 
 template <class T>
-bool broadcast_full_content(const std::vector<int>& sockets, TextContainer<T>& text)
+bool broadcast_full_content(const std::vector<int>& sockets, TextContainer<T>& text, bool forced)
 {
     log("broadcasting full content");
 
     std::pair<char*, size_t> ser = text.serialize();
 
-    size_t len = sizeof(short) + ser.second;
+    size_t len = sizeof(short) + sizeof(char) + ser.second;
     char* buf = new char[len]();
 
     *(short*)buf = htons((short)PacketType::FullContent);
-    memcpy(buf + sizeof(short), ser.first, ser.second);
+    *(char*)(buf + sizeof(short)) = (char)forced;
+    memcpy(buf + sizeof(short) + 1, ser.first, ser.second);
 
     for(int sock : sockets)
     {
@@ -187,5 +204,8 @@ bool broadcast_full_content(const std::vector<int>& sockets, TextContainer<T>& t
     return true;
 
 }
+
+bool broadcast_disconnect(const std::vector<int>& sockets);
+
 
 #endif

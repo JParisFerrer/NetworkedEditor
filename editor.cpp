@@ -25,8 +25,11 @@ namespace client
     // the KEY_ENTER is wrong, use this constant instead
 #define ENTER_KEY 13
 #define CTRL_Q 17
+#define CTRL_S 19
 #define DELETE_KEY 330
 #define MAC_BACK 127
+
+#define TAB_WIDTH 4
 
     WINDOW* mainWindow;
     WINDOW* commandWindow;
@@ -46,8 +49,10 @@ namespace client
     std::mutex mlock;
     //std::mutex glock;
 
-    std::thread thread_messageHandler;
-    std::thread thread_getFull;
+    bool modifiedTextSinceUpdate = false;
+
+    pthread_t thread_messageHandler;
+    pthread_t thread_getFull;
 
     ssize_t numdisplaylines = 1;
     ssize_t numlines = 1;
@@ -238,11 +243,23 @@ namespace client
         // force that persistent thread to die
         close(SERVER_SOCKET);
 
-        thread_messageHandler.join();
-        thread_getFull.join();
+        // WHY WON'T YOU DIE
+        //raise(SIGUSR1);
+
+        //thread_messageHandler.join();
+        //thread_getFull.join();
+
+        pthread_cancel(thread_messageHandler);
+        pthread_cancel(thread_getFull);
 
 
         exit(1);
+    }
+
+    void sigusr_handler(int sigusr)
+    {
+        // do nothing, just break out of recv
+        log("WHY WONT U DIE");
     }
 
     void resize_handler(int sigwinch)
@@ -310,7 +327,7 @@ namespace client
                 continue;
             }
 
-            if (setsockopt(socket_fd, IPPROTO_TCP, TCP_NODELAY, (void*)&no, sizeof(int)) == -1)
+            if (setsockopt(socket_fd, IPPROTO_TCP, TCP_NODELAY, (void*)&yes, sizeof(int)) == -1)
             {
                 perror("setsockopt");
                 return 5;
@@ -370,6 +387,11 @@ namespace client
         sigfillset(&res.sa_mask);
         res.sa_flags = 0 & SA_RESTART;
         sigaction(SIGWINCH, &res, NULL);
+        
+        res.sa_handler = sigusr_handler;
+        sigemptyset(&res.sa_mask);
+        res.sa_flags = 0;
+        sigaction(SIGUSR1, &res, NULL);
         //signal(SIGWINCH, resize_handler);
         //signal(SIGINT, exit_handler);
 
@@ -502,8 +524,14 @@ namespace client
                             // force that persistent thread to die
                             close(SERVER_SOCKET);
 
-                            thread_messageHandler.join();
-                            thread_getFull.join();
+                            // WHY WON'T YOU DIE
+                            //raise(SIGUSR1);
+
+                            //thread_messageHandler.join();
+                            //thread_getFull.join();
+
+                            pthread_cancel(thread_messageHandler);
+                            pthread_cancel(thread_getFull);
 
                             exit(0);
                         }
@@ -593,8 +621,14 @@ namespace client
                 // force that persistent thread to die
                 close(SERVER_SOCKET);
 
-                thread_messageHandler.join();
-                thread_getFull.join();
+                // WHY WON'T YOU DIE
+                //raise(SIGUSR1);
+
+                //thread_messageHandler.join();
+                //thread_getFull.join();
+
+                pthread_cancel(thread_messageHandler);
+                pthread_cancel(thread_getFull);
 
                 exit(0);
             }
@@ -626,7 +660,7 @@ namespace client
                     char* c;
 
                     asprintf(&c, "Saved file: %s", filename.c_str());
-                    print_in_cmd_window(c);
+                    print_in_cmd_window(c, 2);
                     free(c);        // I think it uses malloc
 
                     clear_cmd_window();
@@ -644,7 +678,7 @@ namespace client
                     char* c;
 
                     asprintf(&c, "Read file: %s [%lu lines]", filename.c_str(), linesread);
-                    print_in_cmd_window(c);
+                    print_in_cmd_window(c, 3);
                     free(c);        // I think it uses malloc
 
                     clear_cmd_window();
@@ -656,10 +690,27 @@ namespace client
 
             case PacketType::FullContent:
                 {
-                    // rest of it is serialized thing
-                    log("got full content");
+                    log("Got full content");
 
-                    size_t lines = text.deserialize(msg.first + sizeof(short), msg.second - sizeof(short));
+                    char force = get_bytes_as<char>(msg.first, sizeof(short));
+
+                    if(force)
+                    {
+                        log("[!] got a forced update!");
+                    }
+                    else if(modifiedTextSinceUpdate)
+                    {
+                        log("Didn't overwrite data due to local write");
+                        return;
+                    }
+                    else
+                    {
+                        log("no local modification overwriting data");
+                    }
+
+
+                    // rest of it is serialized thing
+                    size_t lines = text.deserialize(msg.first + sizeof(short) + 1, msg.second - sizeof(short));
 
                     numlines = lines;
 
@@ -732,6 +783,48 @@ namespace client
                     break;
                 }
 
+            case PacketType::Disconnect:
+            {
+                
+                // just a string
+                std::string dcmsg(msg.first + sizeof(short));
+
+                print_in_cmd_window(dcmsg.c_str(), 3);
+
+                clear_cmd_window();
+
+                break;
+            }   
+
+            case PacketType::ClientCount:
+            {
+                int num_clients = get_bytes_as<int>(msg.first, sizeof(short));
+
+                char* c;
+
+                asprintf(&c, "Client count: %d (%d including you)", num_clients-1, num_clients);
+                print_in_cmd_window(c, 2);
+                free(c);        // I think it uses malloc
+
+                clear_cmd_window();
+
+                break;
+            }
+
+            case PacketType::NewClient:
+            {
+                // just a string
+                std::string dcmsg(msg.first + sizeof(short));
+
+                print_in_cmd_window(dcmsg.c_str(), 1);
+
+                clear_cmd_window();
+
+                break;
+
+                break;
+            }
+
             default:
                 {
                     log("Client got unhandled message type %d = %s", (short)type, ((short)type < PacketTypeNum ? PacketTypeNames[(short)type].c_str() : ""));
@@ -742,7 +835,7 @@ namespace client
         mlock.unlock();
     }
 
-    void handleMessages()
+    void* handleMessages(void* arg)
     {
         //log("GOT HERE");
 
@@ -753,7 +846,7 @@ namespace client
             //log("Client got message");
 
             if(SERVER_LOST || SHUTDOWN_NETWORK)
-                return;
+                return NULL;
 
             if(msg.first)
             {
@@ -777,26 +870,24 @@ namespace client
                 signal_disconnect();
 
                 // leave the thread
-                return;
+                return NULL;
             }
         }
     }
 
-    void getFullLoop()
+    void* getFullLoop(void* arg)
     {
         while(!SERVER_LOST && !SHUTDOWN_NETWORK)
         {
-            sleep(3);
-            //log("locking glock");
-            //glock.lock();
-            //log("locked glock");
+            sleep(1);
+            modifiedTextSinceUpdate = false;
             send_get_full(SERVER_SOCKET);
         }
     }
 
     int client_entrypoint()
     {
-        log("in function %s", __func__);
+        log("in client_entrypoint");
 
         sleep(1);
         int ret = setup();
@@ -835,13 +926,17 @@ namespace client
 
         wrefresh(currWindow);
 
-        thread_messageHandler = std::thread(handleMessages);
-        thread_getFull = std::thread(getFullLoop);
+        //thread_messageHandler = std::thread(handleMessages);
+        //thread_getFull = std::thread(getFullLoop);
+
+        pthread_create(&thread_messageHandler, NULL, handleMessages, NULL);
+        pthread_create(&thread_getFull, NULL, getFullLoop, NULL);
 
         //while(1);
 
         if(!START_SERVER)
         {
+            modifiedTextSinceUpdate = false;
             send_get_full(SERVER_SOCKET);
         }
 
@@ -889,6 +984,8 @@ namespace client
             }
             else if (in == ENTER_KEY)
             {
+                modifiedTextSinceUpdate = true;
+
                 if(currWindow == mainWindow)
                 {
                     int x, y;
@@ -1009,6 +1106,12 @@ namespace client
                                     print_in_cmd_window(std::to_string(v.size()).c_str());
                                 }
                             }
+                            else if (v[0] == "cc")
+                            {
+                                // get client count
+
+                                send_get_client_count(SERVER_SOCKET);
+                            }
 
                         }
 
@@ -1028,6 +1131,8 @@ namespace client
             }
             else if (in == KEY_BACKSPACE)
             {
+                modifiedTextSinceUpdate = true;
+
                 int x, y;
                 getyx(currWindow, y, x);
 
@@ -1076,6 +1181,8 @@ namespace client
             }
             else if (in == DELETE_KEY)
             {
+                modifiedTextSinceUpdate = true;
+
                 // like backspace but the other way
                 int x, y;
                 getyx(currWindow, y, x);
@@ -1117,6 +1224,8 @@ namespace client
             }
             else if (isprint(in))
             {
+                modifiedTextSinceUpdate = true;
+
                 int x, y;
                 getyx(currWindow, y, x);
 
@@ -1132,6 +1241,31 @@ namespace client
                 }
 
                 move_win_rel(currWindow, 1, 0);
+            }
+            else if (in == CTRL_S)
+            {
+                // syncronize
+
+                modifiedTextSinceUpdate = false;
+                send_get_full(SERVER_SOCKET);
+            }
+            else if (in == '\t')
+            {
+                modifiedTextSinceUpdate = true;
+
+                // insert 4 spaces
+
+                //log("tab");
+
+                int x, y;
+                getyx(currWindow, y, x);
+
+                for(int i = 0; i < TAB_WIDTH; i++)
+                {
+                    insert_char(y + lineoffset, x, ' ');
+                }
+
+                move_win_rel(currWindow, 4, 0);
             }
             else if (in == 410)
             {
@@ -1169,8 +1303,13 @@ END:
         if(cret)
             perror("close");
 
-        thread_messageHandler.join();
-        thread_getFull.join();
+        // WHY WON'T YOU DIE
+        //raise(SIGUSR1);
+
+        //thread_messageHandler.join();
+        //thread_getFull.join();
+        pthread_cancel(thread_messageHandler);
+        pthread_cancel(thread_getFull);
 
         log("Client joined threads normally");
 
