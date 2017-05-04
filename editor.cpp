@@ -717,14 +717,16 @@ namespace client
                     // rest of it is serialized thing
                     size_t lines = text.deserialize(msg.first + sizeof(short) + 1, msg.second - sizeof(short));
 
-                    if(lines <= lineoffset)
+                    int y, x;
+                    getyx(mainWindow, y, x);
+
+                    if(lineoffset + y <= lines)
                     {
                         lineoffset = 0;
                     }
 
                     numlines = lines;
 
-                    int y, x;
                     getmaxyx(mainWindow, y, x);
 
                     if(numlines > y)
