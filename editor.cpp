@@ -824,8 +824,6 @@ namespace client
                 clear_cmd_window();
 
                 break;
-
-                break;
             }
 
             default:
@@ -835,7 +833,7 @@ namespace client
                 }
         }
 
-        mlock.unlock();
+        //mlock.unlock();
     }
 
     void* handleMessages(void* arg)
@@ -865,7 +863,8 @@ namespace client
                 free_message(msg.first);
 
                 // moved to inside handleMessage so that we can choose not to unlock it (for full reqs)
-                //mlock.unlock();
+                // jk 
+                mlock.unlock();
             }
             else if (msg.second == -1)
             {
