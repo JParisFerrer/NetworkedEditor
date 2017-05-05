@@ -158,14 +158,19 @@ size_t BlockingVector::readFromFile(std::string fileName){
         //in >> inchar;
         for(const char & c : line)
         {
-            newvec[vecindex].push_back(c);
+            if(c != '\n' && c != ENTER_KEY)
+                newvec[vecindex].push_back(c);
+            //else
+             //   log("newline: %lu", vecindex);
         }
         vecindex++;
         newvec.push_back(std::vector<int>());
     }
     // the last line we don't need, it didn't actually exist
     newvec.pop_back();
+   // log("newvecsize: %lu", newvec.size());
     data = std::move(newvec);
+
 
     return data.size();
 }
@@ -175,6 +180,7 @@ void BlockingVector::print(WINDOW* win, size_t line,size_t maxWidth, size_t maxH
 
     size_t index = 0;
     std::vector<int> chars;
+    std::unordered_map<size_t, bool> nls;
 
     wclear(win);
 
@@ -189,10 +195,11 @@ void BlockingVector::print(WINDOW* win, size_t line,size_t maxWidth, size_t maxH
         }
         //std::cout<<std::endl;
         chars.push_back(ENTER_KEY);
+        nls[chars.size() - 1] = true;
     }
 
     std::string s (chars.begin(), chars.end());
-    printColored(win, s);
+    printColored(win, s, nls);
 }
 
 bool BlockingVector::contains(std::vector<std::pair<size_t, size_t>> & v, size_t s)
@@ -206,7 +213,7 @@ bool BlockingVector::contains(std::vector<std::pair<size_t, size_t>> & v, size_t
     return false;
 }
 
-void BlockingVector::printColored(WINDOW* win, std::string text)
+void BlockingVector::printColored(WINDOW* win, const std::string& text, std::unordered_map<size_t, bool> & nls)
 {
 
     //std::lock_guard<std::mutex> lock(vectorLock);
@@ -294,18 +301,23 @@ void BlockingVector::printColored(WINDOW* win, std::string text)
     // print everything
     size_t y = 0;
     size_t x = 0;
+    size_t index = 0;
     for(int ch : ctext)
     {
-        if(ch == ENTER_KEY)
+        if(nls[index])
         {
+            //log("y: %lu, index: %lu", y, index);
             y++;
             x = 0;
 
-            continue;
+        }
+        else
+        {
+            mvwaddch(win, y, x, ch);
+            x++;
         }
 
-        mvwaddch(win, y, x, ch);
-        x++;
+        index++;
     }
 
 }
@@ -341,8 +353,14 @@ std::pair<char*, size_t> BlockingVector::serialize()
             ret[i++] = htonl(data[y][x]);
         }
 
-        ret[i++] = htonl((int)'\n');     // add in the newline terminator
+        ret[i++] = htonl(ENTER_KEY);     // add in the newline terminator
     }
+
+    size_t count = 0;
+    for (i = 0; i < len; i++)
+        count += (ret[i] == htonl(ENTER_KEY) ? 1 : 0);
+
+    //log("sending %lu lines, but %lu newlines", data.size(), count);
 
     return std::make_pair((char*)ret, (len)*4);
 }
@@ -371,7 +389,7 @@ size_t BlockingVector::deserialize(char* ibuf, size_t len)
 
     while(read < len)
     {
-        while(ntohl(*t) != '\n')
+        while(ntohl(*t) != ENTER_KEY)
         {
             newvec[vecindex].push_back(ntohl(*t));
             read++;

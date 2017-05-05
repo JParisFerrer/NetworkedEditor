@@ -693,7 +693,7 @@ namespace client
 
             case PacketType::FullContent:
                 {
-                    log("Got full content");
+                    //log("Got full content");
 
                     char force = get_bytes_as<char>(msg.first, sizeof(short));
 
@@ -716,6 +716,8 @@ namespace client
 
                     // rest of it is serialized thing
                     size_t lines = text.deserialize(msg.first + sizeof(short) + 1, msg.second - sizeof(short));
+
+                    log("got %lu lines", lines);
 
                     int y, x;
                     getyx(mainWindow, y, x);
@@ -901,7 +903,7 @@ namespace client
     {
         while(!SERVER_LOST && !SHUTDOWN_NETWORK)
         {
-            sleep(10);
+            sleep(5);
             modifiedTextSinceUpdate = false;
             send_get_full(SERVER_SOCKET);
         }

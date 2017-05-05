@@ -20,6 +20,7 @@
 #include "networking.h"
 #include "textcontainer.h"
 #include "blockingVector.h"
+#include "lockfreelist.h"
 
 
 namespace server

@@ -197,7 +197,7 @@ bool broadcast_full_content(const std::vector<int>& sockets, TextContainer<T>& t
 
     }
 
-    free(ser.first);
+    delete []ser.first;
 
     //log("broadcasted full content");
 

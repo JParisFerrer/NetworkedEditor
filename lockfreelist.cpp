@@ -563,7 +563,7 @@ size_t LockFreeList::line_width(size_t line) {
     else
     {
         const char* c = __func__;
-        log( "[%s] Bad line %lu \n", c, line);
+        log( "[%s] Bad line %lu ", c, line);
 
         return 0;
     }
@@ -623,7 +623,7 @@ void LockFreeList::remove(size_t line, size_t index){
         bool ret = getLine(line, removePoint);
         if(!ret ) {
             const char* c = __func__;
-            log("[!!] Bad line of %lu (max len: %lu) in %s\n", line, dataLength * CHARBUFFER, c);
+            log("[!!] Bad line of %lu (max len: %lu) in %s", line, dataLength * CHARBUFFER, c);
             return ;
         }
         //std::cout<<"should remove";
@@ -698,7 +698,7 @@ void LockFreeList::print(WINDOW* win, size_t line,size_t maxWidth, size_t maxHei
     if(!ret)
     {
         const char* c = __func__;
-        log("%s bad line index %lu\n", c, line);
+        log("%s bad line index %lu", c, line);
         return;
     }
 
@@ -710,7 +710,7 @@ void LockFreeList::print(WINDOW* win, size_t line,size_t maxWidth, size_t maxHei
         if(index >= maxHeight)
             break;
 
-        wmove(win, index, 0);
+        //wmove(win, index, 0);
         //waddstr(mainWindow, "                                                                                                                                    ");
 
         Buffer* lineData=list->line;
@@ -839,16 +839,16 @@ void LockFreeList::printColored(WINDOW* win, std::string text)
     size_t x = 0;
     for(int ch : ctext)
     {
-        if(ch == ENTER_KEY)
+        if((char)ch == ENTER_KEY)
         {
             y++;
             x = 0;
-
-            continue;
         }
-
-        mvwaddch(win, y, x, ch);
-        x++;
+        else
+        {
+            mvwaddch(win, y, x, ch);
+            x++;
+        }
     }
 
 }
@@ -913,8 +913,10 @@ size_t LockFreeList::readFromFile(std::string filename)
 
         for(const char & c : line)
         {
-            insert(linei, i++, c);
+            if(c != ENTER_KEY && c != '\n')
+                insert(linei, i++, c);
         }
+        insert(linei, i++, ENTER_KEY);
         linei++;
     }
 
@@ -961,6 +963,7 @@ std::pair<char*, size_t> LockFreeList::serialize()
     }
 
     int* ret = new int[len];
+    memset(ret, 0, sizeof(int)*3);
 
     // start at 4th int
     size_t i = 3;
@@ -988,7 +991,7 @@ std::pair<char*, size_t> LockFreeList::serialize()
                 }
             }
             lineData=lineData->next;
-            ret[i++] = htonl((int)'\n');
+            ret[i++] = htonl(ENTER_KEY);
         }
 
         list=list->next;
@@ -1022,16 +1025,18 @@ size_t LockFreeList::deserialize(char* ibuf, size_t len)
     {
         i = 0;
 
-        while(ntohl(*t) != '\n')
+        while(ntohl(*t) != ENTER_KEY)
         {
             insert(line, i++, ntohl(*t));
             read++;
             t++;
+            //log("here2");
         }
         insert(line, i++, ENTER_KEY);
         line++;
         read++;
         t++;
+        //log("here1");
         // add a new line 
     }
 

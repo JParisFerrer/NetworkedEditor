@@ -266,6 +266,7 @@ namespace server
                     std::string filename(msg.first + sizeof(short));
 
                     size_t lines = text.readFromFile(filename);
+                    log("read %lu lines from file", lines);
 
                     broadcast_read_confirm(get_socket_list(), lines, filename);
                     broadcast_full_content(get_socket_list(), text, true);
