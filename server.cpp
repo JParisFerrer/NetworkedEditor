@@ -171,7 +171,7 @@ namespace server
         // now in the loop just handle the commands as they come in
         while(1)
         {
-            log("getting message");
+            //log("getting message");
             std::pair<char*, size_t> msg = get_message(client_fd, true);
 
             // returns non-zero in second arg if it was error, else just no data
@@ -293,7 +293,7 @@ namespace server
 
                 default:
 
-                    log("[!] Server got unhandled message type '%d'", type);
+                    log("[!] Server got unhandled message type '%s' (%d)", ((short)type < PacketTypeNum ? PacketTypeNames[(short)type].c_str() : ""), (short)type);
                     break;
             }
 

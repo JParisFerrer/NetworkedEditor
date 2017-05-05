@@ -10,6 +10,28 @@
 
 extern WINDOW* mainWindow;
 
+// trim from start
+static inline std::string &ltrim(std::string &s) {
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(),
+            std::not1(std::ptr_fun<int, int>(std::isspace))));
+    return s;
+}
+
+// trim from end
+static inline std::string &rtrim(std::string &s) {
+    s.erase(std::find_if(s.rbegin(), s.rend(),
+            std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
+    return s;
+}
+
+// trim from both ends
+static inline std::string &trim(std::string &s) {
+    return ltrim(rtrim(s));
+}
+
+
+
+
 /*Constructors*/
 LockFreeList::LockFreeList() {
     head=new BufferList();
@@ -542,6 +564,8 @@ size_t LockFreeList::line_width(size_t line) {
     {
         const char* c = __func__;
         log( "[%s] Bad line %lu \n", c, line);
+
+        return 0;
     }
 }
 
@@ -636,7 +660,7 @@ void LockFreeList::move(size_t line, size_t index){
 
 }
 
-void LockFreeList::print(WINDOW* win, size_t line,size_t maxWidth){
+void LockFreeList::print(WINDOW* win, size_t line,size_t maxWidth, size_t maxHeight){
 
     // LockFreeList* t = this;
     //
@@ -680,7 +704,12 @@ void LockFreeList::print(WINDOW* win, size_t line,size_t maxWidth){
 
     wclear(win);
     size_t index = 0;
+    std::vector<int> chars;
+
     while(list!=nullptr){
+        if(index >= maxHeight)
+            break;
+
         wmove(win, index, 0);
         //waddstr(mainWindow, "                                                                                                                                    ");
 
@@ -689,7 +718,8 @@ void LockFreeList::print(WINDOW* win, size_t line,size_t maxWidth){
         while(lineData!=nullptr){
             for (size_t i = 0; i < CHARBUFFER; i++) {
                 if (lineData->buffer[i]!=UNUSEDINT) {
-                     mvwaddch(win, index, printindex, lineData->buffer[i]);
+                     //mvwaddch(win, index, printindex, lineData->buffer[i]);
+                    chars.push_back(lineData->buffer[i]);
 
                     printindex++;
                 }
@@ -698,13 +728,130 @@ void LockFreeList::print(WINDOW* win, size_t line,size_t maxWidth){
             lineData=lineData->next;
         }
 
+        chars.push_back(ENTER_KEY);
         list=list->next;
         index++;
     }
 
 
+    std::string s (chars.begin(), chars.end());
+    printColored(win, s);
 }
 
+bool LockFreeList::contains(std::vector<std::pair<size_t, size_t>> & v, size_t s)
+{
+    for(auto & r : v)
+    {
+        if (s >= r.first && s < r.first + r.second)
+            return true;
+    }
+
+    return false;
+}
+
+void LockFreeList::printColored(WINDOW* win, std::string text)
+{
+
+    //std::lock_guard<std::mutex> lock(vectorLock);
+    // set up colors
+    start_color();
+    init_pair(1, COLOR_YELLOW, COLOR_BLACK);
+    init_pair(2, COLOR_CYAN, COLOR_BLACK);
+    init_pair(3, COLOR_BLUE, COLOR_BLACK);
+    init_pair(4, COLOR_RED, COLOR_BLACK);
+
+    std::vector<int> ctext(text.begin(), text.end());
+
+    // loop over regex matches
+    std::vector<std::pair<std::string, int>> keywords = {std::make_pair("\"[^\"]*\"", 4), std::make_pair("\\bfor\\b", 3), std::make_pair("\\bwhile\\b", 3), std::make_pair("\\bdo\\b", 3), std::make_pair("[\\d]+", 1), std::make_pair("#[\\w]+", 3)};
+
+    std::string types[] = {"int", "long", "string", "char", "size_t", "ssize_t", "short", "bool", "[\\w]+_t"};
+
+    std::vector<std::pair<size_t, size_t>> already_matched;
+
+    for (std::string type : types)
+    {
+        char* ftype;
+        asprintf(&ftype, "\\b%s\\b", type.c_str());
+        keywords.push_back(std::make_pair(std::string(ftype), 2));
+        free(ftype);
+    }
+
+    bool any = false;
+    for(auto r : keywords)
+    {
+        //log("started matchingn");
+        std::smatch m;
+        try
+        {
+            std::string temptext = text;
+            size_t offset = 0;
+            while(std::regex_search(temptext, m, std::regex(r.first)))
+            {
+                any = true;
+
+                // got a match
+                for(int i = 0; i < m.size(); i++)
+                {
+                    // i is the index into m of our match
+                    // m.position(i) is index into text that the match starts at
+                    // m.length(i) is length of the match
+
+                    //log("got match '%s' at index %d, pos %ld and len %ldn", m[i].str().c_str(), i, m.position(i), m.length(i));
+
+                    std::string trimmed = m[i].str();
+                    trim(trimmed);
+
+                    bool colored = false;
+                    size_t first = 0;
+                    for (int po = m.position(i), le = m.length(i), in = po; in < po + le; in++)
+                    {
+                        if(!std::isspace(ctext[in + offset]) && !contains(already_matched, in + offset))
+                        {
+                            ctext[in + offset] |= COLOR_PAIR(r.second);
+                            if(!colored)
+                                first = in + offset;
+                            colored = true;
+                        }
+                    }
+
+                    if(colored)
+                        already_matched.push_back(std::make_pair(first, trimmed.length()));
+                }
+
+                temptext = m.suffix().str();
+                offset += m.length(0) + m.position(0);
+            }
+        }
+        catch (const std::exception& e)
+        {
+            std::cerr << e.what() << std::endl;
+        }
+
+        //log("done matching");
+    }
+
+    if(any);
+        //log("");
+
+    // print everything
+    size_t y = 0;
+    size_t x = 0;
+    for(int ch : ctext)
+    {
+        if(ch == ENTER_KEY)
+        {
+            y++;
+            x = 0;
+
+            continue;
+        }
+
+        mvwaddch(win, y, x, ch);
+        x++;
+    }
+
+}
 
 /*debugging utilties*/
 void LockFreeList::printDebug(){
@@ -750,6 +897,9 @@ void LockFreeList::writeToFile(std::string filename)
 
 size_t LockFreeList::readFromFile(std::string filename)
 {
+    clear();
+
+
     std::fstream in;
     in.open(filename, std::fstream::in);
 
@@ -866,6 +1016,8 @@ size_t LockFreeList::deserialize(char* ibuf, size_t len)
     // throw away first 10 bytes, for reasons
     int* t = buf;
 
+    //log("deserializing %lu chars", len);
+
     while(read < len)
     {
         i = 0;
@@ -876,10 +1028,11 @@ size_t LockFreeList::deserialize(char* ibuf, size_t len)
             read++;
             t++;
         }
+        insert(line, i++, ENTER_KEY);
         line++;
         read++;
         t++;
-        // add a new line (actually don't because of insert
+        // add a new line 
     }
 
     return line;

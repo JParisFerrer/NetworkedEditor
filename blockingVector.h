@@ -27,7 +27,7 @@ class BlockingVector {
 
         void writeToFile(std::string fileName);
         size_t readFromFile(std::string fileName);
-        void print(WINDOW* win, size_t line,size_t maxWidth);
+        void print(WINDOW* win, size_t line,size_t maxWidth, size_t maxHeight);
         void printColored(WINDOW* win, std::string text);
 
         std::pair<char*, size_t> serialize();
@@ -36,6 +36,9 @@ class BlockingVector {
         /*debugging utilties*/
         void printDebug();
         void writeToFileDebug();
+
+        bool contains(std::vector<std::pair<size_t, size_t>> & v, size_t s);
+
 
     private:
         std::vector< std::vector<int> > data;

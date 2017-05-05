@@ -404,7 +404,7 @@ bool send_write(int sock, std::string filename)
 bool send_write_confirm(int sock, std::string filename)
 {
     const char* c = __func__;
-    log("%s", c);
+    //log("%s", c);
     size_t len = sizeof(short) + filename.length() + 1;
     len = std::max((size_t)10, len);// for reasons, make this at least 10
     char* buf = new char[len]();
@@ -523,7 +523,7 @@ bool broadcast_read_confirm(const std::vector<int> & sockets, size_t lines, std:
 
 bool send_get_full(int sock)
 {
-    log("requesting full");
+    //log("requesting full");
     
     size_t len = sizeof(short);
     len = std::max((size_t)10, len);// for reasons, make this at least 10
@@ -542,7 +542,7 @@ bool send_get_full(int sock)
 
     delete [] buf;
 
-    log("requested full");
+    //log("requested full");
 
     return ret;
 

@@ -38,8 +38,8 @@ size_t TextContainer<T>::readFromFile(std::string fileName){
 }
 
 template <typename T>
-void TextContainer<T>::print(WINDOW* win, size_t line,size_t maxWidth){
-    this->container.print(win, line, maxWidth);
+void TextContainer<T>::print(WINDOW* win, size_t line,size_t maxWidth, size_t maxHeight){
+    this->container.print(win, line, maxWidth, maxHeight);
 }
 
 template <typename T>

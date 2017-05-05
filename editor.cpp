@@ -162,7 +162,7 @@ namespace client
         //    text.print(lineoffset + y, maxx);
         //}
 
-        text.print(mainWindow, lineoffset, maxx);
+        text.print(mainWindow, lineoffset, maxx, maxy-1);
 
         for(int x = 0; x < commands.size(); x++)
         {
@@ -212,7 +212,7 @@ namespace client
                 capped_y = 0;
             }
 
-            capped_x = std::min((ssize_t)(x + xoffs), (ssize_t)text.line_width(capped_y));
+            capped_x = std::min((ssize_t)(x + xoffs), (ssize_t)text.line_width(capped_y + lineoffset));
 
             if(capped_x < 0)
                 capped_x = 0;
@@ -700,6 +700,8 @@ namespace client
                     if(force)
                     {
                         log("[!] got a forced update!");
+                        lineoffset = 0;
+                        move_win_rel(mainWindow, -999999999, -999999999);
                     }
                     else if(modifiedTextSinceUpdate)
                     {
@@ -715,9 +717,16 @@ namespace client
                     // rest of it is serialized thing
                     size_t lines = text.deserialize(msg.first + sizeof(short) + 1, msg.second - sizeof(short));
 
+                    int y, x;
+                    getyx(mainWindow, y, x);
+
+                    if(lineoffset + y >= lines)
+                    {
+                        lineoffset = 0;
+                    }
+
                     numlines = lines;
 
-                    int y, x;
                     getmaxyx(mainWindow, y, x);
 
                     if(numlines > y)
@@ -779,6 +788,17 @@ namespace client
                                 numdisplaylines--;
                             numlines--;
 
+                            int cy, cx;
+                            getyx(mainWindow, cy, cx);
+
+                            if(lineoffset + cy >= numlines)
+                            {
+                                lineoffset = numlines - cy;
+
+                                if(lineoffset < 0)
+                                    lineoffset = 0;
+
+                            }
                             //move_win_rel(mainWindow, above_width, -1);
                     }
                     text.remove(y, x);
@@ -787,46 +807,44 @@ namespace client
                 }
 
             case PacketType::Disconnect:
-            {
-                
-                // just a string
-                std::string dcmsg(msg.first + sizeof(short));
+                {
 
-                print_in_cmd_window(dcmsg.c_str(), 3);
+                    // just a string
+                    std::string dcmsg(msg.first + sizeof(short));
 
-                clear_cmd_window();
+                    print_in_cmd_window(dcmsg.c_str(), 3);
 
-                break;
-            }   
+                    clear_cmd_window();
+
+                    break;
+                }   
 
             case PacketType::ClientCount:
-            {
-                int num_clients = get_bytes_as<int>(msg.first, sizeof(short));
+                {
+                    int num_clients = get_bytes_as<int>(msg.first, sizeof(short));
 
-                char* c;
+                    char* c;
 
-                asprintf(&c, "Client count: %d (%d including you)", num_clients-1, num_clients);
-                print_in_cmd_window(c, 2);
-                free(c);        // I think it uses malloc
+                    asprintf(&c, "Client count: %d (%d including you)", num_clients-1, num_clients);
+                    print_in_cmd_window(c, 2);
+                    free(c);        // I think it uses malloc
 
-                clear_cmd_window();
+                    clear_cmd_window();
 
-                break;
-            }
+                    break;
+                }
 
             case PacketType::NewClient:
-            {
-                // just a string
-                std::string dcmsg(msg.first + sizeof(short));
+                {
+                    // just a string
+                    std::string dcmsg(msg.first + sizeof(short));
 
-                print_in_cmd_window(dcmsg.c_str(), 1);
+                    print_in_cmd_window(dcmsg.c_str(), 1);
 
-                clear_cmd_window();
+                    clear_cmd_window();
 
-                break;
-
-                break;
-            }
+                    break;
+                }
 
             default:
                 {
@@ -835,7 +853,7 @@ namespace client
                 }
         }
 
-        mlock.unlock();
+        //mlock.unlock();
     }
 
     void* handleMessages(void* arg)
@@ -865,7 +883,8 @@ namespace client
                 free_message(msg.first);
 
                 // moved to inside handleMessage so that we can choose not to unlock it (for full reqs)
-                //mlock.unlock();
+                // jk 
+                mlock.unlock();
             }
             else if (msg.second == -1)
             {
@@ -882,7 +901,7 @@ namespace client
     {
         while(!SERVER_LOST && !SHUTDOWN_NETWORK)
         {
-            sleep(1);
+            sleep(10);
             modifiedTextSinceUpdate = false;
             send_get_full(SERVER_SOCKET);
         }
@@ -1165,8 +1184,8 @@ namespace client
                     if(y > 0 && currWindow == mainWindow)
                     {
                         // save width of line above us
-                        size_t above_width = text.line_width(y-1);
-                        size_t us_width = text.line_width(y);
+                        size_t above_width = text.line_width(y + lineoffset -1);
+                        size_t us_width = text.line_width(y + lineoffset);
 
                         // get the container to remove the line
                         //text.remove(y+lineoffset, -1);
@@ -1198,7 +1217,7 @@ namespace client
                     goto END;
                 }
 
-                if(x < text.line_width(y))
+                if(x < text.line_width(y + lineoffset))
                 {
                     //data[y][x] = ' ';
                     //data[y].erase(data[y].begin() + x);
@@ -1211,8 +1230,8 @@ namespace client
                     if(y < numlines-1)
                     {
                         // save width of line above us
-                        size_t below_width = text.line_width(y+1);
-                        size_t us_width = text.line_width(y);
+                        size_t below_width = text.line_width(y + lineoffset +1);
+                        size_t us_width = text.line_width(y + lineoffset);
 
                         // get the container to remove the line
                         //text.remove(y+lineoffset+1, -1);
