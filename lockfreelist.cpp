@@ -542,6 +542,8 @@ size_t LockFreeList::line_width(size_t line) {
     {
         const char* c = __func__;
         log( "[%s] Bad line %lu \n", c, line);
+
+        return 0;
     }
 }
 
@@ -753,6 +755,9 @@ void LockFreeList::writeToFile(std::string filename)
 
 size_t LockFreeList::readFromFile(std::string filename)
 {
+    clear();
+
+
     std::fstream in;
     in.open(filename, std::fstream::in);
 
@@ -869,6 +874,8 @@ size_t LockFreeList::deserialize(char* ibuf, size_t len)
     // throw away first 10 bytes, for reasons
     int* t = buf;
 
+    //log("deserializing %lu chars", len);
+
     while(read < len)
     {
         i = 0;
@@ -879,10 +886,11 @@ size_t LockFreeList::deserialize(char* ibuf, size_t len)
             read++;
             t++;
         }
+        insert(line, i++, ENTER_KEY);
         line++;
         read++;
         t++;
-        // add a new line (actually don't because of insert
+        // add a new line 
     }
 
     return line;

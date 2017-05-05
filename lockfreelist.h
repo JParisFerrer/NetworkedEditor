@@ -42,7 +42,7 @@ struct Buffer {
 
     ~Buffer(){
         // jk we need this later
-        //delete [] buffer;
+        delete [] buffer;
     }
 };
 struct BufferList {
