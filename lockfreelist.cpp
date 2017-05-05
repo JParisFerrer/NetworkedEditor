@@ -763,7 +763,7 @@ void LockFreeList::printColored(WINDOW* win, std::string text)
     std::vector<int> ctext(text.begin(), text.end());
 
     // loop over regex matches
-    std::vector<std::pair<std::string, int>> keywords = {std::make_pair("\"[^\"]*\"", 4), std::make_pair("\\bfor\\b", 3), std::make_pair("\\bwhile\\b", 3), std::make_pair("\\bdo\\b", 3), std::make_pair("[\\d]+", 1), std::make_pair("#[\\w]+", 3)};
+    std::vector<std::pair<std::string, int>> keywords = {std::make_pair("\"[^\"]*\"", 4), std::make_pair("\\bfor\\b", 3), std::make_pair("\\bwhile\\b", 3), std::make_pair("\\bdo\\b", 3), std::make_pair("\\breturn\\b", 3), std::make_pair("\\bswitch\\b", 3), std::make_pair("\\belse\\b", 3), std::make_pair("\\bif\\b", 3), std::make_pair("\\bbreak\\b", 3), std::make_pair("\\bnamespace\\b", 3), std::make_pair("[\\d]+", 1), std::make_pair("#[\\w]+", 3)};
 
     std::string types[] = {"int", "long", "string", "char", "size_t", "ssize_t", "short", "bool", "[\\w]+_t"};
 
