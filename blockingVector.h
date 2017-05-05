@@ -37,6 +37,9 @@ class BlockingVector {
         void printDebug();
         void writeToFileDebug();
 
+        bool contains(std::vector<std::pair<size_t, size_t>> & v, size_t s);
+
+
     private:
         std::vector< std::vector<int> > data;
 

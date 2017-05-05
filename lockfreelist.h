@@ -10,6 +10,8 @@
 #include <chrono>
 #include "curses.h"
 #include <cstring>
+#include <regex>
+#include <utility>
 #include "networking.h"
 
 #define CHARBUFFER 4
@@ -70,6 +72,7 @@ public:
   void writeToFile(std::string fileName);
   size_t readFromFile(std::string fileName);
   void print(WINDOW* win, size_t line,size_t maxWidth, size_t maxHeight);
+  void printColored(WINDOW* win, std::string text);
 
   std::pair<char*, size_t> serialize();
   size_t deserialize(char* buf, size_t len);
@@ -84,6 +87,7 @@ public:
   /*debugging utilties*/
   void printDebug();
   void writeToFileDebug();
+  bool contains(std::vector<std::pair<size_t, size_t>> & v, size_t s);
 
 private:
 

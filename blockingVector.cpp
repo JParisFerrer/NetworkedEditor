@@ -195,7 +195,7 @@ void BlockingVector::print(WINDOW* win, size_t line,size_t maxWidth, size_t maxH
     printColored(win, s);
 }
 
-bool contains(std::vector<std::pair<size_t, size_t>> & v, size_t s)
+bool BlockingVector::contains(std::vector<std::pair<size_t, size_t>> & v, size_t s)
 {
     for(auto & r : v)
     {
